@@ -1,0 +1,193 @@
+# Clean My Car — continuous integration
+#
+# Required stages (backend):
+#   1. lint     — Ruff check + format
+#   2. test     — pytest (with Postgres service)
+#   3. build    — Docker image build (no push)
+#
+# Final job `ci` aggregates results for branch protection (single required check).
+# Backend stages skip when the PR/push does not touch backend-related paths.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_VERSION: "0.7.12"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 0 — detect what changed (monorepo path filters)
+  # ---------------------------------------------------------------------------
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Path filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'docker-compose.yml'
+              - '.github/workflows/ci.yml'
+              - 'Makefile'
+
+  # ---------------------------------------------------------------------------
+  # Stage 1 — Lint
+  # ---------------------------------------------------------------------------
+  backend-lint:
+    name: "Backend · Lint"
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Ruff check
+        run: uv run ruff check src tests
+
+      - name: Ruff format (check only)
+        run: uv run ruff format --check src tests
+
+  # ---------------------------------------------------------------------------
+  # Stage 2 — Test
+  # ---------------------------------------------------------------------------
+  backend-test:
+    name: "Backend · Test"
+    needs: [changes, backend-lint]
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cleanmycar
+          POSTGRES_PASSWORD: cleanmycar
+          POSTGRES_DB: cleanmycar
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cleanmycar -d cleanmycar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DEBUG: "false"
+      POSTGRES_USER: cleanmycar
+      POSTGRES_PASSWORD: cleanmycar
+      POSTGRES_DB: cleanmycar
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      DATABASE_URL: postgresql+asyncpg://cleanmycar:cleanmycar@localhost:5432/cleanmycar
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run pytest
+        run: uv run pytest -q --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Stage 3 — Docker build
+  # ---------------------------------------------------------------------------
+  backend-docker:
+    name: "Backend · Docker build"
+    needs: [changes, backend-test]
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: clean-my-car-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # Gate — single required status check for branch protection
+  # ---------------------------------------------------------------------------
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [changes, backend-lint, backend-test, backend-docker]
+    if: always()
+    steps:
+      - name: Evaluate pipeline result
+        run: |
+          set -euo pipefail
+          backend="${{ needs.changes.outputs.backend }}"
+          echo "Backend changes detected: ${backend}"
+
+          if [[ "${backend}" != "true" ]]; then
+            echo "No backend-related paths changed — CI gate passed (skipped backend stages)."
+            exit 0
+          fi
+
+          lint="${{ needs.backend-lint.result }}"
+          test="${{ needs.backend-test.result }}"
+          docker="${{ needs.backend-docker.result }}"
+
+          echo "lint=${lint} test=${test} docker=${docker}"
+
+          if [[ "${lint}" != "success" || "${test}" != "success" || "${docker}" != "success" ]]; then
+            echo "::error::One or more required backend stages failed."
+            exit 1
+          fi
+
+          echo "All required backend stages passed."

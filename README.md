@@ -57,6 +57,25 @@ clean-my-car/
 
 Compose and Make live at the **repo root** so future services (`ios` tooling, workers, etc.) share one developer entrypoint.
 
+## CI / GitHub Actions
+
+Workflows live under `.github/workflows/`.
+
+| Workflow | When | Stages |
+|----------|------|--------|
+| **CI** (`ci.yml`) | Push/PR to `main` | **Lint** → **Test** (Postgres) → **Docker build** |
+| **PR Title** (`pr-title.yml`) | Pull requests | Conventional Commits title check |
+
+Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). The final **`CI`** job is the single gate to mark required in branch protection.
+
+### Branch protection (recommended)
+
+In GitHub → **Settings → Branches → Branch protection rules** for `main`:
+
+1. Require a pull request before merging  
+2. Require status checks to pass: **`CI`** (and optionally **Conventional Commits title**)  
+3. Do not allow bypassing the above if you want the same rules for everyone  
+
 ## Git workflow
 
 ### Branching

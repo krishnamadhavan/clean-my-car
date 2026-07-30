@@ -56,8 +56,20 @@ test(api): cover readiness failure when db is down
 
 1. Branch from latest `main` using the naming scheme in the root README.
 2. Keep PRs focused (one concern per PR when practical).
-3. Ensure `make build` / `make test` pass for backend changes.
-4. Use a conventional commit style for the PR title as well (e.g. `feat(api): ...`).
+3. Ensure local checks pass for backend changes: `make test` / `make lint` (or rely on CI).
+4. Use a conventional commit style for the **PR title** as well (e.g. `chore(backend): ...`). CI validates the title.
+5. Wait for the **CI** status check (lint → test → Docker build) before merge when backend paths changed.
+
+### CI stages (backend)
+
+| Stage | Job | What it runs |
+|-------|-----|--------------|
+| Lint | `Backend · Lint` | `ruff check`, `ruff format --check` |
+| Test | `Backend · Test` | `pytest` against Postgres 16 |
+| Build | `Backend · Docker build` | Build `backend/Dockerfile` (no registry push) |
+| Gate | `CI` | Fails if any required backend stage failed |
+
+Docs-only changes skip backend jobs; the `CI` gate still reports success.
 
 ## Backend development
 

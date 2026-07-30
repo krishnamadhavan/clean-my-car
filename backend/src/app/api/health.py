@@ -1,5 +1,7 @@
 """Health and readiness endpoints."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -9,6 +11,8 @@ from app.db.session import get_db
 
 router = APIRouter(tags=["health"])
 
+DbSession = Annotated[AsyncSession, Depends(get_db)]
+
 
 @router.get("/health")
 async def health() -> dict[str, str]:
@@ -17,7 +21,7 @@ async def health() -> dict[str, str]:
 
 
 @router.get("/ready")
-async def ready(db: AsyncSession = Depends(get_db)) -> JSONResponse:
+async def ready(db: DbSession) -> JSONResponse:
     """Readiness probe — process can serve traffic (DB reachable)."""
     try:
         await db.execute(text("SELECT 1"))
