@@ -1,0 +1,8 @@
+# <type>(optional-scope): <description>
+#
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+# Scopes: api, db, auth, docker, ios, docs, make, ...
+#
+# Body: motivation / context (optional)
+#
+# Footer: BREAKING CHANGE: ... | Refs: #123

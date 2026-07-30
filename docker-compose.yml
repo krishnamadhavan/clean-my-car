@@ -1,0 +1,64 @@
+# Clean My Car monorepo — local development stack
+# Usage: make up  (or: docker compose up --build)
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cmc-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cleanmycar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cleanmycar}
+      POSTGRES_DB: ${POSTGRES_DB:-cleanmycar}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - cmc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cleanmycar} -d ${POSTGRES_DB:-cleanmycar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cmc-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      POSTGRES_USER: ${POSTGRES_USER:-cleanmycar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cleanmycar}
+      POSTGRES_DB: ${POSTGRES_DB:-cleanmycar}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-cleanmycar}:${POSTGRES_PASSWORD:-cleanmycar}@db:5432/${POSTGRES_DB:-cleanmycar}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Live reload for local development
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --app-dir /app/src
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  cmc_pgdata:
