@@ -109,6 +109,9 @@ jobs:
     env:
       APP_ENV: test
       DEBUG: "false"
+      JWT_SECRET_KEY: test-secret-key-not-for-production
+      OTP_RESEND_COOLDOWN_SECONDS: "0"
+      OTP_MAX_REQUESTS_PER_HOUR: "100"
       POSTGRES_USER: cleanmycar
       POSTGRES_PASSWORD: cleanmycar
       POSTGRES_DB: cleanmycar
@@ -130,6 +133,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen --group dev
+
+      - name: Run migrations
+        run: uv run alembic upgrade head
 
       - name: Run pytest
         run: uv run pytest -q --tb=short

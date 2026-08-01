@@ -35,14 +35,34 @@ With the stack running:
 ```
 backend/
   src/app/
-    api/           # route modules
-    core/          # settings, shared utilities
-    db/            # engine, session, base
-    models/        # SQLAlchemy models
-    schemas/       # Pydantic schemas
-    main.py        # FastAPI app factory
-  alembic/         # migrations
+    api/
+      deps.py              # shared dependencies (DB, auth)
+      v1/
+        router.py
+        endpoints/         # health, auth, …
+    core/                  # settings, security, phone, exceptions
+    db/                    # engine, session, base, mixins
+    models/                # SQLAlchemy models
+    schemas/               # Pydantic request/response models
+    services/              # domain services (auth, sms, …)
+    main.py
+  alembic/                 # migrations
   tests/
   Dockerfile
   pyproject.toml
+```
+
+## Auth (Module 1)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/v1/auth/otp/request` | Send OTP |
+| POST | `/api/v1/auth/otp/verify` | Verify OTP → access + refresh tokens |
+| POST | `/api/v1/auth/token/refresh` | Rotate tokens |
+| POST | `/api/v1/auth/logout` | Revoke refresh token |
+
+In non-production environments the request OTP response includes `debug_otp` for local testing.
+
+```bash
+make migrate   # apply users / otp / refresh_tokens tables
 ```

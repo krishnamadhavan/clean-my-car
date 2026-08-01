@@ -3,18 +3,21 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api.router import api_router
+from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.exceptions import AppError
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    # Startup hooks (e.g. warm pools) go here.
     yield
-    # Shutdown hooks go here.
+    from app.db.session import dispose_engine
+
+    await dispose_engine()
 
 
 def create_app() -> FastAPI:
@@ -25,6 +28,14 @@ def create_app() -> FastAPI:
         debug=settings.debug,
         lifespan=lifespan,
     )
+
+    @application.exception_handler(AppError)
+    async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"code": exc.code, "message": exc.message},
+        )
+
     application.include_router(api_router, prefix=settings.api_v1_prefix)
 
     @application.get("/")
