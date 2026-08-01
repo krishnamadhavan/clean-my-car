@@ -7,7 +7,20 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.schemas.user import UserPublic
+from app.schemas.user import MessageOut, UserPublic
+
+__all__ = [
+    "AccessTokenOut",
+    "AuthSessionOut",
+    "ErrorOut",
+    "LogoutIn",
+    "MessageOut",
+    "OtpRequestIn",
+    "OtpRequestOut",
+    "OtpVerifyIn",
+    "RefreshTokenIn",
+    "TokenPairOut",
+]
 
 
 class OtpRequestIn(BaseModel):
@@ -49,10 +62,6 @@ class AccessTokenOut(BaseModel):
 
 class LogoutIn(BaseModel):
     refresh_token: str
-
-
-class MessageOut(BaseModel):
-    message: str
 
 
 class ErrorOut(BaseModel):

@@ -63,6 +63,17 @@ backend/
 
 In non-production environments the request OTP response includes `debug_otp` for local testing.
 
+## Profile (Module 2)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/me` | Current profile + flags |
+| PATCH | `/api/v1/me` | Update name / email |
+| POST | `/api/v1/me/deactivate` | Soft-deactivate (revokes sessions) |
+| DELETE | `/api/v1/me` | Request account deletion (soft-delete) |
+
+Requires `Authorization: Bearer <access_token>`.
+
 ```bash
-make migrate   # apply users / otp / refresh_tokens tables
+make migrate   # apply users / otp / refresh_tokens / deleted_at
 ```

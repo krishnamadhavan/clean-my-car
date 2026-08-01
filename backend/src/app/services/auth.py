@@ -88,6 +88,12 @@ class AuthService:
 
         challenge.consumed_at = now
         user = await self._get_or_create_user(phone)
+        if user.deleted_at is not None:
+            raise AppError(
+                "Account has been deleted",
+                code="account_deleted",
+                status_code=403,
+            )
         if not user.is_active:
             raise AppError("Account is deactivated", code="account_inactive", status_code=403)
 
@@ -108,7 +114,7 @@ class AuthService:
             raise UnauthorizedError("Invalid refresh token", code="refresh_invalid")
 
         user = await self.session.get(User, stored.user_id)
-        if user is None or not user.is_active:
+        if user is None or not user.is_active or user.deleted_at is not None:
             raise UnauthorizedError("Invalid refresh token", code="refresh_invalid")
 
         # Rotate refresh token
