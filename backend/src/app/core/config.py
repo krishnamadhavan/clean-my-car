@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     # Dev-only: include OTP in API response (never enable in production)
     otp_return_in_response: bool = Field(default=False, alias="OTP_RETURN_IN_RESPONSE")
 
+    # After DELETE /me, same phone cannot complete OTP verify until this many days pass.
+    # Set to 0 to allow immediate re-registration. Fractional days allowed (e.g. 0.5).
+    account_deletion_cooloff_days: float = Field(
+        default=1.0,
+        ge=0,
+        alias="ACCOUNT_DELETION_COOLOFF_DAYS",
+    )
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def async_database_url(self) -> str:

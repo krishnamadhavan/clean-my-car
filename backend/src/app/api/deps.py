@@ -52,7 +52,11 @@ async def get_current_user(
         raise UnauthorizedError("Invalid access token", code="token_invalid") from exc
 
     user = await db.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None:
+        raise UnauthorizedError("User not found or inactive", code="user_inactive")
+    if user.deleted_at is not None:
+        raise UnauthorizedError("Account has been deleted", code="account_deleted")
+    if not user.is_active:
         raise UnauthorizedError("User not found or inactive", code="user_inactive")
     return user
 

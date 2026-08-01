@@ -2,16 +2,9 @@
 
 from __future__ import annotations
 
-import uuid
-
 from httpx import AsyncClient
 
-
-def _unique_phone() -> str:
-    """10-digit Indian mobile unique enough for concurrent/repeated test runs."""
-    # 9XXXXXXXXX — first digit 9, remaining from random int
-    suffix = uuid.uuid4().int % 10_000_0000
-    return f"9{suffix:09d}"[:10]
+from tests.helpers import unique_phone as _unique_phone
 
 
 async def test_otp_request_normalizes_phone(client: AsyncClient) -> None:
