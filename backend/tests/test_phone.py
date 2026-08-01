@@ -1,9 +1,8 @@
 """Unit tests for phone normalization."""
 
 import pytest
-from fastapi import HTTPException
-
 from app.core.phone import normalize_indian_phone
+from fastapi import HTTPException
 
 
 @pytest.mark.parametrize(

@@ -192,8 +192,8 @@ For the **current calendar month**, the user must always be able to see:
 | **Pending** | Entitled − Completed (remaining washes still expected) |
 | **Interior progress** *(if applicable)* | Interior cleans done vs included for the month |
 
-**Example (illustrative):**  
-User entitled to 12 exterior washes this month; 7 done → **7 completed, 5 pending**.  
+**Example (illustrative):**
+User entitled to 12 exterior washes this month; 7 done → **7 completed, 5 pending**.
 Interior 2×/month; 1 done → **1 of 2 interiors completed**.
 
 ### 5.7 Billing: calendar month, pro-rated start, cancel at month-end
@@ -211,7 +211,7 @@ Interior 2×/month; 1 done → **1 of 2 interiors completed**.
 - Show **“Pay ₹X for remainder of [Month]”** when joining mid-month, with a clear note of the **full monthly price from next month**.
 - On cancel, show **“You’ll keep service until [last day of month]. No charge from next month.”**
 
-**Pro-rate calculation (product intent, not engineering formula):**  
+**Pro-rate calculation (product intent, not engineering formula):**
 Charge and entitlement scale with **how much of the month remains** after signup (by days remaining and/or remaining society service days—exact formula to be specified in the technical design and finance review, but must feel fair and explainable in the app).
 
 ### 5.8 Missed washes: next-day attempt
@@ -418,14 +418,14 @@ Even if not exposed in the consumer iOS app, the **business** requires:
 
 ### 8.2 Dashboard content (minimum)
 
-- Greeting / vehicle name  
-- **Completed X / Entitled Y** exterior washes this **calendar month**  
-- **Interior: A / B** if subscribed  
-- Progress indicator (ring or bar)  
-- Next service day (or next-day retry if applicable)  
-- Society’s weekly service days  
-- Active plan / price (and “service until …” if cancellation scheduled)  
-- Quick link to history and manage plan  
+- Greeting / vehicle name
+- **Completed X / Entitled Y** exterior washes this **calendar month**
+- **Interior: A / B** if subscribed
+- Progress indicator (ring or bar)
+- Next service day (or next-day retry if applicable)
+- Society’s weekly service days
+- Active plan / price (and “service until …” if cancellation scheduled)
+- Quick link to history and manage plan
 
 ---
 
@@ -502,38 +502,38 @@ Even if not exposed in the consumer iOS app, the **business** requires:
 
 The following are **not** required for the first release:
 
-1. Native Android app or consumer web app  
-2. One-off / on-demand booking as the main product  
-3. Full marketplace of independent cleaners  
-4. Detailing packages (polish, ceramic, engine wash) beyond standard exterior + interior  
-5. Multi-city expansion automation (manual ops configuration OK)  
-6. Society admin portal for RWAs  
-7. Advanced cleaner routing / GPS live tracking  
-8. In-app chat with cleaners  
-9. Corporate / fleet subscriptions  
-10. Loyalty points / referral programme *(Could later)*  
-11. Multi-language full localisation  
-12. Independent houses / standalone villas as a primary segment  
-13. Mid-month cancel **refunds** (explicitly not offered under current policy)  
-14. **Multi-car** accounts / multiple vehicles per subscription  
-15. **XL / luxury** vehicle size tier  
-16. **Mandatory auto-pay** / UPI autopay mandates  
-17. **Automated interior day scheduling** in the app (ops coordinates offline)  
-18. Full-featured **cleaner field app**  
+1. Native Android app or consumer web app
+2. One-off / on-demand booking as the main product
+3. Full marketplace of independent cleaners
+4. Detailing packages (polish, ceramic, engine wash) beyond standard exterior + interior
+5. Multi-city expansion automation (manual ops configuration OK)
+6. Society admin portal for RWAs
+7. Advanced cleaner routing / GPS live tracking
+8. In-app chat with cleaners
+9. Corporate / fleet subscriptions
+10. Loyalty points / referral programme *(Could later)*
+11. Multi-language full localisation
+12. Independent houses / standalone villas as a primary segment
+13. Mid-month cancel **refunds** (explicitly not offered under current policy)
+14. **Multi-car** accounts / multiple vehicles per subscription
+15. **XL / luxury** vehicle size tier
+16. **Mandatory auto-pay** / UPI autopay mandates
+17. **Automated interior day scheduling** in the app (ops coordinates offline)
+18. Full-featured **cleaner field app**
 
 ---
 
 ## 13. Assumptions
 
-1. Field cleaners can access apartment parking on designated service days with society permission.  
-2. Ops can mark washes complete the same day (or within a short SLA), and can flag missed + next-day retry.  
-3. Water and supplies are handled operationally outside the consumer app.  
-4. Each subscriber has **one vehicle** in v1.  
-5. Payment gateway supports Indian methods (UPI, cards, etc.) for **one-time / monthly manual** charges, including variable first-period (pro-rated) amounts. Auto-pay is not required for launch.  
-6. Legal entity can issue GST-compliant invoices as required.  
-7. Ops will keep cities, societies, schedules, and city price matrices up to date in the application database.  
-8. Next-day retries are operationally feasible in pilot societies (staffing/logistics).  
-9. Ops can coordinate interior visit days with users outside the app (phone/WhatsApp/on-site).  
+1. Field cleaners can access apartment parking on designated service days with society permission.
+2. Ops can mark washes complete the same day (or within a short SLA), and can flag missed + next-day retry.
+3. Water and supplies are handled operationally outside the consumer app.
+4. Each subscriber has **one vehicle** in v1.
+5. Payment gateway supports Indian methods (UPI, cards, etc.) for **one-time / monthly manual** charges, including variable first-period (pro-rated) amounts. Auto-pay is not required for launch.
+6. Legal entity can issue GST-compliant invoices as required.
+7. Ops will keep cities, societies, schedules, and city price matrices up to date in the application database.
+8. Next-day retries are operationally feasible in pilot societies (staffing/logistics).
+9. Ops can coordinate interior visit days with users outside the app (phone/WhatsApp/on-site).
 
 ---
 
@@ -588,28 +588,28 @@ The following are **not** required for the first release:
 ## 16. Release Phasing (product, not engineering)
 
 ### Phase 0 — Foundations
-- Ops seed **live** cities, societies, **per-society schedules**, and **city price matrices** in the application database  
-- Optionally lock Q15–Q17 (or use suggested defaults in §14.2)  
-- Define legal terms, GST posture, cancellation policy (aligned with §5.7)  
+- Ops seed **live** cities, societies, **per-society schedules**, and **city price matrices** in the application database
+- Optionally lock Q15–Q17 (or use suggested defaults in §14.2)
+- Define legal terms, GST posture, cancellation policy (aligned with §5.7)
 
 ### Phase 1 — MVP (iOS)
-- Auth, eligibility (**only live societies** listed), **single** vehicle, subscribe  
-- City-specific pricing; pro-rated first charge; calendar-month cycle  
-- **Manual monthly payment** for each period  
-- Dashboard: completed vs pending (+ interior counts)  
-- **Minimal** internal process to mark washes complete, missed, and next-day retry (no full ops suite / no cleaner app)  
-- Cancel with service-until-month-end behaviour  
-- Interior days coordinated offline  
+- Auth, eligibility (**only live societies** listed), **single** vehicle, subscribe
+- City-specific pricing; pro-rated first charge; calendar-month cycle
+- **Manual monthly payment** for each period
+- Dashboard: completed vs pending (+ interior counts)
+- **Minimal** internal process to mark washes complete, missed, and next-day retry (no full ops suite / no cleaner app)
+- Cancel with service-until-month-end behaviour
+- Interior days coordinated offline
 
 ### Phase 2 — Retention & polish
-- Pause, plan changes, wash history, richer notifications (including retry)  
-- Waitlist when society not listed  
-- Improved invoices; optional auto-pay as convenience  
+- Pause, plan changes, wash history, richer notifications (including retry)
+- Waitlist when society not listed
+- Improved invoices; optional auto-pay as convenience
 
 ### Phase 3 — Scale
-- More cities/societies via ops configuration  
-- Android  
-- Optional richer ops tools, referrals, multi-car (if ever needed), etc.  
+- More cities/societies via ops configuration
+- Android
+- Optional richer ops tools, referrals, multi-car (if ever needed), etc.
 
 ---
 
@@ -622,10 +622,10 @@ The following are **not** required for the first release:
 | Design | | Pending | |
 | Engineering lead | | Pending | |
 
-**Review outcome:**  
-- [ ] Approved as-is for technical design  
-- [ ] Approved with noted changes  
-- [ ] Needs another revision  
+**Review outcome:**
+- [ ] Approved as-is for technical design
+- [ ] Approved with noted changes
+- [ ] Needs another revision
 
 ---
 
@@ -667,16 +667,16 @@ Service: **3 exterior-capable days per week per society**; interior count per pl
 
 ## 20. Next Steps (after PRD approval)
 
-1. PRD v1.3 is ready for technical design (optionally confirm Q15–Q17 defaults).  
-2. Produce a **Technical Design Document** covering:  
-   - iOS app architecture  
-   - FastAPI backend services & data model (cities, **live** societies only in consumer APIs, schedules, city pricing, single vehicle)  
-   - Calendar-month billing, pro-ration, cancel-at-month-end, **manual monthly pay**  
-   - Auth, payments, notifications  
-   - Minimal wash completion / missed / next-day retry mechanism (no full ops suite)  
-   - Environments, security, and rollout  
-3. UX wireframes for core flows (live society pick → pro-rated checkout → dashboard → monthly pay → cancel).  
-4. Ops runbook: society go-live, daily completion, next-day retries, offline interior coordination.  
+1. PRD v1.3 is ready for technical design (optionally confirm Q15–Q17 defaults).
+2. Produce a **Technical Design Document** covering:
+   - iOS app architecture
+   - FastAPI backend services & data model (cities, **live** societies only in consumer APIs, schedules, city pricing, single vehicle)
+   - Calendar-month billing, pro-ration, cancel-at-month-end, **manual monthly pay**
+   - Auth, payments, notifications
+   - Minimal wash completion / missed / next-day retry mechanism (no full ops suite)
+   - Environments, security, and rollout
+3. UX wireframes for core flows (live society pick → pro-rated checkout → dashboard → monthly pay → cancel).
+4. Ops runbook: society go-live, daily completion, next-day retries, offline interior coordination.
 
 ---
 

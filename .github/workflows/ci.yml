@@ -137,8 +137,12 @@ jobs:
       - name: Run migrations
         run: uv run alembic upgrade head
 
-      - name: Run pytest
-        run: uv run pytest -q --tb=short
+      - name: Run pytest with coverage (≥95%)
+        run: >
+          uv run pytest -q --tb=short
+          --cov=app
+          --cov-report=term-missing
+          --cov-fail-under=95
 
   # ---------------------------------------------------------------------------
   # Stage 3 — Docker build

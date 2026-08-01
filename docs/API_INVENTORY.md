@@ -355,7 +355,7 @@ This document lists **all APIs the mobile app is expected to call** for v1, grou
 | OPS-03 | `GET /ops/societies/{society_id}/roster` | Subscribers/vehicles due on a date | S | O6 |
 | OPS-04 | `GET /ops/washes` | Filter washes by society/date/status | S | O4–O6 |
 
-**Auth:** separate ops credentials / VPN / admin token — not end-user JWT.  
+**Auth:** separate ops credentials / VPN / admin token — not end-user JWT.
 **Form factor:** thin internal client or scripts; **not** a full ops suite (O7/O8 Won’t).
 
 Catalog/pricing seeding for ops may be admin scripts or a later internal admin API (`POST /ops/cities`, etc.) — **out of consumer inventory**; treat as platform ops until productized.
@@ -390,17 +390,17 @@ Approximate counts for planning (IDs above; webhooks/ops excluded from mobile ef
 
 ### Suggested MVP slice (implement first)
 
-1. Auth (AUTH-01–04)  
-2. Profile (PROF-01–02)  
-3. Location (LOC-01–05)  
-4. Vehicle (VEH-01–03)  
-5. Pricing (PRICE-01–02)  
-6. Subscription (SUB-01–03)  
-7. Payments (PAY-01–03, PAY-07) + WH-01  
-8. Dashboard (DASH-01)  
-9. Washes (WASH-01, WASH-04)  
-10. Legal (SUP-02) + Support create (SUP-03)  
-11. Ops complete/miss (OPS-01–02) so dashboard numbers move  
+1. Auth (AUTH-01–04)
+2. Profile (PROF-01–02)
+3. Location (LOC-01–05)
+4. Vehicle (VEH-01–03)
+5. Pricing (PRICE-01–02)
+6. Subscription (SUB-01–03)
+7. Payments (PAY-01–03, PAY-07) + WH-01
+8. Dashboard (DASH-01)
+9. Washes (WASH-01, WASH-04)
+10. Legal (SUP-02) + Support create (SUP-03)
+11. Ops complete/miss (OPS-01–02) so dashboard numbers move
 
 ---
 
@@ -442,14 +442,14 @@ DASH-01  (or WASH-01 + SUB-01 + PAY-07 + WASH-04)
 
 Aligned with PRD Won’t / non-goals:
 
-- Multi-car subscription APIs  
-- Auto-pay mandate create/revoke  
-- Interior day scheduling / cleaner chat  
-- One-off “book a wash now” marketplace  
-- Consumer cleaner tracking / live GPS  
-- Full ops workforce suite  
-- Society RWA admin portal APIs  
-- Android-specific endpoints (same API; client differs later)  
+- Multi-car subscription APIs
+- Auto-pay mandate create/revoke
+- Interior day scheduling / cleaner chat
+- One-off “book a wash now” marketplace
+- Consumer cleaner tracking / live GPS
+- Full ops workforce suite
+- Society RWA admin portal APIs
+- Android-specific endpoints (same API; client differs later)
 
 ---
 
@@ -471,20 +471,20 @@ Aligned with PRD Won’t / non-goals:
 
 Please mark feedback on:
 
-- [ ] Module boundaries (merge/split any modules?)  
-- [ ] Any **missing** consumer API for a PRD Must?  
-- [ ] Any API to **drop** from MVP Must list?  
-- [ ] Prefer **DASH-01 aggregate** vs client composition only?  
-- [ ] Waitlist / pause / plan-change: keep as Should for v1.1?  
-- [ ] Ops APIs: OK as separate non-mobile surface?  
+- [ ] Module boundaries (merge/split any modules?)
+- [ ] Any **missing** consumer API for a PRD Must?
+- [ ] Any API to **drop** from MVP Must list?
+- [ ] Prefer **DASH-01 aggregate** vs client composition only?
+- [ ] Waitlist / pause / plan-change: keep as Should for v1.1?
+- [ ] Ops APIs: OK as separate non-mobile surface?
 
 ---
 
 ## 24. Next steps (after approval)
 
-1. Freeze MVP Must set.  
-2. Produce OpenAPI (or technical design) for Must endpoints only.  
-3. Implement module-by-module on feature branches (no commit until you review).  
+1. Freeze MVP Must set.
+2. Produce OpenAPI (or technical design) for Must endpoints only.
+3. Implement module-by-module on feature branches (no commit until you review).
 4. iOS can generate client stubs from OpenAPI later.
 
 ---

@@ -29,8 +29,8 @@ We use **Conventional Commits** so history stays readable and automation (change
 <footer>
 ```
 
-- **description:** imperative mood, lowercase start preferred, no trailing period  
-  Good: `add readiness probe`  
+- **description:** imperative mood, lowercase start preferred, no trailing period
+  Good: `add readiness probe`
   Bad: `Added readiness probe.`
 - **scope:** optional but preferred when touching a clear area (`api`, `db`, `docker`, `ios`, `docs`)
 
@@ -86,7 +86,30 @@ make env
 make up
 make migrate
 make test
-make lint
+make coverage          # term + HTML; **must be ≥ 95%**
+make lint              # ruff check
+make format            # ruff fix + format
 ```
 
 API docs: http://localhost:8000/docs
+
+**Coverage gate:** total coverage for `app` must stay **≥ 95%** (`fail_under` in `pyproject.toml`, enforced by `make coverage` and CI).
+
+## Pre-commit (required for local commits)
+
+Install once per clone so hooks run **before every commit**:
+
+```bash
+make pre-commit-install
+```
+
+Hooks (see `.pre-commit-config.yaml`):
+
+- General: trailing whitespace, EOF, YAML/TOML, large files, private keys
+- **Backend Python:** **Ruff** lint (`--fix`) + **Ruff** format
+
+```bash
+make pre-commit          # run all hooks on the whole repo
+```
+
+Full tests/coverage need Postgres/Docker (`make test` / `make coverage`) before opening a PR.

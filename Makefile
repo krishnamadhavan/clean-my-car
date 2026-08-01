@@ -105,30 +105,80 @@ migration: ## Create a new Alembic revision (usage: make migration m="add users"
 	fi
 	$(COMPOSE) exec $(API_SERVICE) alembic revision --autogenerate -m "$(m)"
 
+# Shared env + mounts for test / coverage one-off containers
+TEST_RUN = $(COMPOSE) run --rm \
+	-e APP_ENV=test \
+	-e JWT_SECRET_KEY=test-secret-key-not-for-production \
+	-e OTP_RESEND_COOLDOWN_SECONDS=0 \
+	-e OTP_MAX_REQUESTS_PER_HOUR=100 \
+	-v "$(CURDIR)/$(BACKEND_DIR)/tests:/app/tests" \
+	-v "$(CURDIR)/$(BACKEND_DIR)/src:/app/src" \
+	-v "$(CURDIR)/$(BACKEND_DIR)/alembic:/app/alembic" \
+	-v "$(CURDIR)/$(BACKEND_DIR)/pyproject.toml:/app/pyproject.toml" \
+	-v "$(CURDIR)/$(BACKEND_DIR)/uv.lock:/app/uv.lock"
+
 .PHONY: test
 test: ## Run backend tests in a one-off container
-	$(COMPOSE) run --rm \
-		-e APP_ENV=test \
-		-e JWT_SECRET_KEY=test-secret-key-not-for-production \
-		-e OTP_RESEND_COOLDOWN_SECONDS=0 \
-		-e OTP_MAX_REQUESTS_PER_HOUR=100 \
-		-v "$(CURDIR)/$(BACKEND_DIR)/tests:/app/tests" \
-		-v "$(CURDIR)/$(BACKEND_DIR)/src:/app/src" \
-		-v "$(CURDIR)/$(BACKEND_DIR)/alembic:/app/alembic" \
-		-v "$(CURDIR)/$(BACKEND_DIR)/pyproject.toml:/app/pyproject.toml" \
-		-v "$(CURDIR)/$(BACKEND_DIR)/uv.lock:/app/uv.lock" \
+	$(TEST_RUN) \
 		$(API_SERVICE) \
 		sh -c "uv sync --frozen --group dev && alembic upgrade head && pytest -q"
 
+.PHONY: coverage
+coverage: ## Run tests with coverage (term + HTML under backend/htmlcov)
+	@mkdir -p "$(BACKEND_DIR)/htmlcov"
+	$(TEST_RUN) \
+		-v "$(CURDIR)/$(BACKEND_DIR)/htmlcov:/app/htmlcov" \
+		$(API_SERVICE) \
+		sh -c "uv sync --frozen --group dev && alembic upgrade head && \
+			pytest -q \
+				--cov=app \
+				--cov-report=term-missing \
+				--cov-report=html:htmlcov \
+				--cov-report=xml:htmlcov/coverage.xml && \
+			echo '' && echo 'HTML report: $(BACKEND_DIR)/htmlcov/index.html'"
+
 .PHONY: lint
-lint: ## Run Ruff linter in a one-off container
+lint: ## Run Ruff linter on backend (container)
 	$(COMPOSE) run --rm $(API_SERVICE) \
-		sh -c "uv sync --group dev && ruff check src tests"
+		sh -c "uv sync --frozen --group dev && ruff check src tests"
 
 .PHONY: format
-format: ## Format backend code with Ruff
+format: ## Format backend with Ruff (import sort + style)
 	$(COMPOSE) run --rm $(API_SERVICE) \
-		sh -c "uv sync --group dev && ruff format src tests && ruff check --fix src tests"
+		sh -c "uv sync --frozen --group dev && ruff check --fix src tests && ruff format src tests"
+
+.PHONY: format-check
+format-check: ## Check Ruff format/lint without writing
+	$(COMPOSE) run --rm $(API_SERVICE) \
+		sh -c "uv sync --frozen --group dev && ruff check src tests && ruff format --check src tests"
+
+# ---------------------------------------------------------------------------
+# Pre-commit (runs automatically on git commit after install)
+# ---------------------------------------------------------------------------
+
+# Prefer PATH; fall back to uv tool install location
+PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo "$(HOME)/.local/bin/pre-commit")
+
+.PHONY: pre-commit-install
+pre-commit-install: ## Install git hooks so pre-commit runs before every commit
+	@if ! command -v pre-commit >/dev/null 2>&1 && [ ! -x "$(HOME)/.local/bin/pre-commit" ]; then \
+		echo "Installing pre-commit via uv tool..."; \
+		uv tool install pre-commit; \
+	fi
+	@if ! command -v pre-commit >/dev/null 2>&1 && [ -x "$(HOME)/.local/bin/pre-commit" ]; then \
+		echo "Note: add $(HOME)/.local/bin to PATH (e.g. uv tool update-shell)"; \
+	fi
+	"$(PRE_COMMIT)" install
+	@echo ""
+	@echo "pre-commit installed for this repo."
+	@echo "Hooks run on every 'git commit'. Manual: make pre-commit"
+
+.PHONY: pre-commit
+pre-commit: ## Run all pre-commit hooks against the full tree
+	@if [ ! -x "$(PRE_COMMIT)" ] && ! command -v pre-commit >/dev/null 2>&1; then \
+		echo "Run: make pre-commit-install"; exit 1; \
+	fi
+	"$(PRE_COMMIT)" run --all-files
 
 .PHONY: ready
 ready: ## Hit readiness endpoint (DB check)
