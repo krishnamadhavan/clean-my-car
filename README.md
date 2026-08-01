@@ -33,6 +33,11 @@ make ready             # DB connectivity
 make logs          # follow all logs
 make migrate       # Alembic upgrade head
 make test          # backend tests
+make coverage      # tests + coverage (≥95% required; report in backend/htmlcov/)
+make format        # ruff fix + format
+make lint          # ruff check
+make pre-commit-install   # once: run hooks before every git commit
+make pre-commit    # ruff + file checks on all files
 make down          # stop stack
 make help          # all targets
 ```
@@ -72,9 +77,9 @@ Backend stages run only when backend-related paths change (`backend/**`, compose
 
 In GitHub → **Settings → Branches → Branch protection rules** for `main`:
 
-1. Require a pull request before merging  
-2. Require status checks to pass: **`CI`** (and optionally **Conventional Commits title**)  
-3. Do not allow bypassing the above if you want the same rules for everyone  
+1. Require a pull request before merging
+2. Require status checks to pass: **`CI`** (and optionally **Conventional Commits title**)
+3. Do not allow bypassing the above if you want the same rules for everyone
 
 ## Git workflow
 

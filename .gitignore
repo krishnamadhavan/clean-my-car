@@ -9,8 +9,13 @@
 secrets/
 
 # ---------------------------------------------------------------------------
-# Python
+# Python / coverage
 # ---------------------------------------------------------------------------
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+backend/htmlcov/
 __pycache__/
 *.py[cod]
 *$py.class

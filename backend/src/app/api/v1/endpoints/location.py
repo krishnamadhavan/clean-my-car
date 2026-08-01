@@ -44,7 +44,7 @@ async def list_societies(
     svc: LocationServiceDep,
     q: Annotated[str | None, Query(description="Search by name or address")] = None,
     page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+    page_size: Annotated[int, Query(ge=1)] = 20,
 ) -> SocietyListOut:
     return await svc.list_live_societies(city_id, q=q, page=page, page_size=page_size)
 

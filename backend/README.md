@@ -21,6 +21,8 @@ make up          # start API + Postgres
 make logs        # follow logs
 make migrate     # run Alembic migrations
 make test        # run backend tests in container
+make coverage    # tests + coverage ≥95% (HTML: backend/htmlcov/index.html)
+make pre-commit-install  # once: enable pre-commit git hooks (Ruff)
 make down        # stop stack
 ```
 

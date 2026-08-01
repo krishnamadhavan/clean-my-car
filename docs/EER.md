@@ -15,8 +15,8 @@ Visual ER diagram in the style of a **pgAdmin / Workbench export** (table boxes 
 
 **Update `docs/diagrams/database-er.svg` whenever the database design changes** (same PR as models + Alembic):
 
-- Add/remove/rename tables or columns  
-- Change FKs, nullability, uniqueness, or `ON DELETE`  
+- Add/remove/rename tables or columns
+- Change FKs, nullability, uniqueness, or `ON DELETE`
 
 Also refresh the short notes below if relationships change.
 
