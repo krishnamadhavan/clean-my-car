@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
+from httpx import AsyncClient
+
 from app.db.session import AsyncSessionLocal
 from app.models.city import City
 from app.models.society import Society
-from httpx import AsyncClient
-
 from tests.helpers import register_and_login
 
 

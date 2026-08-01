@@ -113,9 +113,10 @@ async def test_reregister_after_cooloff_elapsed(client: AsyncClient) -> None:
     """After cool-off, OTP verify reactivates the same phone account."""
     from datetime import UTC, datetime, timedelta
 
+    from sqlalchemy import update
+
     from app.db.session import AsyncSessionLocal
     from app.models.user import User
-    from sqlalchemy import update
 
     phone = unique_phone()
     tokens = await register_and_login(client, phone=phone)

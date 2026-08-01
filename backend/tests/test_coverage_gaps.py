@@ -7,6 +7,9 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from httpx import AsyncClient
+from sqlalchemy import update
+
 from app.core.config import Settings, get_settings
 from app.core.exceptions import (
     ConflictError,
@@ -20,9 +23,6 @@ from app.models.city import City
 from app.models.society import Society
 from app.models.user import User
 from app.schemas.user import MeUpdate
-from httpx import AsyncClient
-from sqlalchemy import update
-
 from tests.helpers import register_and_login, unique_phone
 
 
