@@ -126,3 +126,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## Product docs
 
 - [Project Requirements Document](docs/PRD.md)
+- [API Inventory](docs/API_INVENTORY.md)
+- [Database ER diagram](docs/diagrams/database-er.svg) — **update on every schema change** ([notes](docs/EER.md))
