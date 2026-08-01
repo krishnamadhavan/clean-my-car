@@ -9,6 +9,8 @@ FastAPI service for the Clean My Car subscription platform.
 - **Alembic** for migrations
 - Runs via **Docker Compose** from the monorepo root
 
+**Database ER diagram:** [`docs/diagrams/database-er.svg`](../docs/diagrams/database-er.svg) (update on every schema change).
+
 ## Local commands
 
 Prefer Make targets from the **repository root** (see root `Makefile`).
@@ -82,3 +84,15 @@ verify reactivates the account. During cool-off, verify returns `403` with code
 ```bash
 make migrate   # apply users / otp / refresh_tokens / deleted_at
 ```
+
+## Location (Module 3)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/cities` | Active cities only |
+| GET | `/api/v1/cities/{city_id}/societies` | Live societies (`q`, `page`, `page_size`) |
+| GET | `/api/v1/societies/{society_id}` | Society detail + service weekdays |
+| GET | `/api/v1/me/location` | User city/society (auth) |
+| PUT | `/api/v1/me/location` | Set city + live society (auth) |
+
+`service_weekdays`: `0=Mon` … `6=Sun` (exactly three for v1). Non-serviceable societies never appear in list/detail for consumers.

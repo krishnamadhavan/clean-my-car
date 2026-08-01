@@ -7,6 +7,14 @@
 - Use root `Makefile` and `docker-compose.yml` for local backend development.
 - Do not commit secrets. Use `.env` (gitignored); start from `.env.example`.
 
+### Database design / ER diagram (required)
+
+The visual ER diagram (pgAdmin-style export) is:
+
+**[`docs/diagrams/database-er.svg`](docs/diagrams/database-er.svg)**
+
+**Any schema change must update that SVG in the same PR** (with models + Alembic). Short notes live in [`docs/EER.md`](docs/EER.md).
+
 ## Commit messages (required)
 
 We use **Conventional Commits** so history stays readable and automation (changelog, versioning) stays possible.

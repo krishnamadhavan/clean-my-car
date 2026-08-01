@@ -6,14 +6,16 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, String, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.city import City
     from app.models.refresh_token import RefreshToken
+    from app.models.society import Society
 
 
 class User(Base, TimestampMixin):
@@ -29,8 +31,23 @@ class User(Base, TimestampMixin):
     # Set when the user requests account deletion (soft-delete / retention)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    city_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("cities.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    society_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("societies.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         "RefreshToken",
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    city: Mapped[City | None] = relationship("City", foreign_keys=[city_id])
+    society: Mapped[Society | None] = relationship("Society", foreign_keys=[society_id])
