@@ -88,12 +88,7 @@ class AuthService:
 
         challenge.consumed_at = now
         user = await self._get_or_create_user(phone)
-        if user.deleted_at is not None:
-            raise AppError(
-                "Account has been deleted",
-                code="account_deleted",
-                status_code=403,
-            )
+        user = self._apply_deleted_account_policy(user, now=now)
         if not user.is_active:
             raise AppError("Account is deactivated", code="account_inactive", status_code=403)
 
@@ -145,6 +140,38 @@ class AuthService:
         user = User(phone=phone)
         self.session.add(user)
         await self.session.flush()
+        return user
+
+    def _apply_deleted_account_policy(self, user: User, *, now: datetime) -> User:
+        """Enforce deletion cool-off; reactivate when the cool-off has elapsed (Option B).
+
+        Cool-off length: ``Settings.account_deletion_cooloff_days`` (default 1 day).
+        """
+        if user.deleted_at is None:
+            return user
+
+        deleted_at = user.deleted_at
+        if deleted_at.tzinfo is None:
+            deleted_at = deleted_at.replace(tzinfo=UTC)
+
+        cooloff = timedelta(days=self.settings.account_deletion_cooloff_days)
+        available_at = deleted_at + cooloff
+
+        if now < available_at:
+            raise AppError(
+                "Account was deleted. You can sign up again after the cool-off period.",
+                code="account_deletion_cooling_off",
+                status_code=403,
+                details={
+                    "deleted_at": deleted_at.isoformat(),
+                    "available_at": available_at.isoformat(),
+                    "cooloff_days": self.settings.account_deletion_cooloff_days,
+                },
+            )
+
+        # Cool-off complete: restore account as a fresh login (profile PII already cleared)
+        user.deleted_at = None
+        user.is_active = True
         return user
 
     async def _issue_token_pair(self, user: User) -> tuple[str, str]:

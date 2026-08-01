@@ -31,10 +31,10 @@ def create_app() -> FastAPI:
 
     @application.exception_handler(AppError)
     async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"code": exc.code, "message": exc.message},
-        )
+        body: dict = {"code": exc.code, "message": exc.message}
+        if exc.details is not None:
+            body["details"] = exc.details
+        return JSONResponse(status_code=exc.status_code, content=body)
 
     application.include_router(api_router, prefix=settings.api_v1_prefix)
 

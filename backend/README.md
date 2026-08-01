@@ -74,6 +74,11 @@ In non-production environments the request OTP response includes `debug_otp` for
 
 Requires `Authorization: Bearer <access_token>`.
 
+**Re-signup after delete (Option B):** same phone cannot complete OTP login until
+`ACCOUNT_DELETION_COOLOFF_DAYS` have passed (default **1**). After cool-off, OTP
+verify reactivates the account. During cool-off, verify returns `403` with code
+`account_deletion_cooling_off` and `details.available_at`.
+
 ```bash
 make migrate   # apply users / otp / refresh_tokens / deleted_at
 ```

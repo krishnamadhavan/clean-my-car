@@ -83,7 +83,7 @@ async def test_deactivate_blocks_access(client: AsyncClient) -> None:
     assert refreshed.status_code == 401
 
 
-async def test_delete_account(client: AsyncClient) -> None:
+async def test_delete_account_blocks_login_during_cooloff(client: AsyncClient) -> None:
     phone = unique_phone()
     tokens = await register_and_login(client, phone=phone)
     access = tokens["access_token"]
@@ -94,7 +94,7 @@ async def test_delete_account(client: AsyncClient) -> None:
     me = await client.get("/api/v1/me", headers=_auth(access))
     assert me.status_code == 401
 
-    # Cannot log in again on deleted account
+    # Same phone cannot complete OTP verify during cool-off (default 1 day)
     req = await client.post("/api/v1/auth/otp/request", json={"phone": phone})
     assert req.status_code == 200
     otp = req.json()["debug_otp"]
@@ -103,4 +103,40 @@ async def test_delete_account(client: AsyncClient) -> None:
         json={"phone": phone, "otp": otp},
     )
     assert verify.status_code == 403
-    assert verify.json()["code"] == "account_deleted"
+    body = verify.json()
+    assert body["code"] == "account_deletion_cooling_off"
+    assert "available_at" in body["details"]
+    assert body["details"]["cooloff_days"] == 1.0
+
+
+async def test_reregister_after_cooloff_elapsed(client: AsyncClient) -> None:
+    """After cool-off, OTP verify reactivates the same phone account."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import update
+
+    from app.db.session import AsyncSessionLocal
+    from app.models.user import User
+
+    phone = unique_phone()
+    tokens = await register_and_login(client, phone=phone)
+    deleted = await client.delete("/api/v1/me", headers=_auth(tokens["access_token"]))
+    assert deleted.status_code == 200
+
+    # Simulate cool-off already finished (deleted 2 days ago; default cool-off = 1 day)
+    async with AsyncSessionLocal() as session:
+        await session.execute(
+            update(User)
+            .where(User.phone == f"+91{phone}")
+            .values(deleted_at=datetime.now(UTC) - timedelta(days=2))
+        )
+        await session.commit()
+
+    again = await register_and_login(client, phone=phone)
+    assert again["access_token"]
+    assert again["user"]["phone"] == f"+91{phone}"
+    assert again["user"]["is_active"] is True
+
+    me = await client.get("/api/v1/me", headers=_auth(again["access_token"]))
+    assert me.status_code == 200
+    assert me.json()["deleted_at"] is None
