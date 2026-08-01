@@ -1,4 +1,7 @@
-"""ORM models package.
+"""ORM models package — import models so metadata is complete for Alembic."""
 
-Domain models will be added here (users, subscriptions, washes, etc.).
-"""
+from app.models.otp_challenge import OtpChallenge
+from app.models.refresh_token import RefreshToken
+from app.models.user import User
+
+__all__ = ["OtpChallenge", "RefreshToken", "User"]

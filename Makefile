@@ -108,11 +108,17 @@ migration: ## Create a new Alembic revision (usage: make migration m="add users"
 .PHONY: test
 test: ## Run backend tests in a one-off container
 	$(COMPOSE) run --rm \
+		-e APP_ENV=test \
+		-e JWT_SECRET_KEY=test-secret-key-not-for-production \
+		-e OTP_RESEND_COOLDOWN_SECONDS=0 \
+		-e OTP_MAX_REQUESTS_PER_HOUR=100 \
 		-v "$(CURDIR)/$(BACKEND_DIR)/tests:/app/tests" \
 		-v "$(CURDIR)/$(BACKEND_DIR)/src:/app/src" \
+		-v "$(CURDIR)/$(BACKEND_DIR)/alembic:/app/alembic" \
 		-v "$(CURDIR)/$(BACKEND_DIR)/pyproject.toml:/app/pyproject.toml" \
+		-v "$(CURDIR)/$(BACKEND_DIR)/uv.lock:/app/uv.lock" \
 		$(API_SERVICE) \
-		sh -c "uv sync --group dev && pytest -q"
+		sh -c "uv sync --frozen --group dev && alembic upgrade head && pytest -q"
 
 .PHONY: lint
 lint: ## Run Ruff linter in a one-off container
