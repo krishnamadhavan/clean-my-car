@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppError, ForbiddenError
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
+from app.models.vehicle import Vehicle
 from app.schemas.user import MeOut, MeUpdate
 
 
@@ -17,8 +18,9 @@ class ProfileService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    def build_me(self, user: User) -> MeOut:
-        """Assemble /me payload. Vehicle/subscription flags until those modules land."""
+    async def build_me(self, user: User) -> MeOut:
+        """Assemble /me payload including vehicle/subscription flags."""
+        has_vehicle = await self._has_vehicle(user)
         return MeOut(
             id=user.id,
             phone=user.phone,
@@ -27,9 +29,15 @@ class ProfileService:
             is_active=user.is_active,
             created_at=user.created_at,
             deleted_at=user.deleted_at,
-            has_vehicle=False,
+            has_vehicle=has_vehicle,
             has_subscription=False,
         )
+
+    async def _has_vehicle(self, user: User) -> bool:
+        result = await self.session.execute(
+            select(Vehicle.id).where(Vehicle.user_id == user.id).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
 
     async def update_profile(self, user: User, data: MeUpdate) -> User:
         self._ensure_mutable(user)

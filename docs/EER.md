@@ -30,6 +30,9 @@ Also refresh the short notes below if relationships change.
 | `refresh_tokens` | Hashed refresh sessions |
 | `otp_challenges` | Phone OTP challenges (no user FK) |
 | `waitlist_entries` | Demand capture when society not live (Module 4); one per user |
+| `vehicle_makes` | Car brands (ops catalog) |
+| `vehicle_models` | Models under a make + **ops-defined** size_tier |
+| `vehicles` | One vehicle per user; `model_id` + size_tier snapshot |
 
 ## Relationships
 
@@ -41,6 +44,9 @@ Also refresh the short notes below if relationships change.
 | `refresh_tokens.user_id` | `users` | `refresh_tokens` | CASCADE |
 | `waitlist_entries.user_id` | `users` | `waitlist_entries` | SET NULL (unique when set — one entry per user) |
 | `waitlist_entries.city_id` | `cities` | `waitlist_entries` | CASCADE |
+| `vehicle_models.make_id` | `vehicle_makes` | `vehicle_models` | CASCADE |
+| `vehicles.user_id` | `users` | `vehicles` | CASCADE (unique) |
+| `vehicles.model_id` | `vehicle_models` | `vehicles` | RESTRICT |
 
 ## Alembic map
 
@@ -50,3 +56,4 @@ Also refresh the short notes below if relationships change.
 | `20260801_0002` | users.deleted_at |
 | `20260801_0003` | cities, societies, user location FKs |
 | `20260802_0004` | waitlist_entries |
+| `20260802_0005` | vehicle_makes, vehicle_models, vehicles |
