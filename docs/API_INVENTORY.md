@@ -136,20 +136,24 @@ This document lists **all APIs the mobile app is expected to call** for v1, grou
 
 ## 7. Module 5 — Vehicle
 
-**Goal:** Exactly **one** vehicle per account in v1 (size drives price).
+**Goal:** Exactly **one** vehicle per account in v1. **Size tier is not user-declared** — the user picks **make + model** from an ops-maintained catalog; the server derives Small / Medium / Large from the model.
 
 | ID | Method / path | Purpose | Priority | PRD |
 |----|---------------|---------|----------|-----|
-| VEH-01 | `GET /me/vehicle` | Get current vehicle (404 if none) | M | V1 |
-| VEH-02 | `PUT /me/vehicle` | Create or replace the single vehicle | M | V1, V4 |
-| VEH-03 | `PATCH /me/vehicle` | Partial update (nickname, plate, colour, size, parking slot/tower) | M | V2, V4 |
+| VEH-01 | `GET /me/vehicle` | Get current vehicle (404 if none); includes make, model, derived size_tier | M | V1 |
+| VEH-02 | `PUT /me/vehicle` | Create or replace vehicle with `model_id` (+ optional nickname/plate/colour/parking) | M | V1, V4 |
+| VEH-03 | `PATCH /me/vehicle` | Partial update; changing `model_id` re-derives size_tier | M | V2, V4 |
 | VEH-04 | `DELETE /me/vehicle` | Remove vehicle (blocked if active paid sub — rule TBD) | S | V1 |
-| VEH-05 | `GET /vehicle-size-tiers` | Reference list: Small / Medium / Large (+ examples for UI) | S | V1, size guide |
+| VEH-05 | `GET /vehicle-size-tiers` | Informational labels for Small / Medium / Large (not a picker for pricing) | S | V1 |
+| VEH-06 | `GET /vehicle-makes` | List active brands / makes for the picker | M | V1 |
+| VEH-07 | `GET /vehicle-makes/{make_id}/models` | List active models for a make (each includes catalog `size_tier`) | M | V1 |
 
 **Notes**
 
 - No multi-vehicle list endpoints in v1 (PRD W: multi-car).
-- Size change may require subscription plan recalculation (tie to Module 7).
+- Clients **must not** send `size_tier` on create/update; it is set only from `vehicle_models.size_tier`.
+- Catalog is ops data (seed/admin later); inactive makes/models are hidden from consumers.
+- Model change may require subscription plan recalculation (tie to Module 7).
 
 ---
 

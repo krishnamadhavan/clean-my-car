@@ -19,7 +19,7 @@ def _profile_service(db: DbSession) -> ProfileService:
     summary="Get current user profile (PROF-01)",
 )
 async def get_me(user: CurrentUser, db: DbSession) -> MeOut:
-    return _profile_service(db).build_me(user)
+    return await _profile_service(db).build_me(user)
 
 
 @router.patch(
@@ -30,7 +30,7 @@ async def get_me(user: CurrentUser, db: DbSession) -> MeOut:
 async def patch_me(body: MeUpdate, user: CurrentUser, db: DbSession) -> MeOut:
     service = _profile_service(db)
     updated = await service.update_profile(user, body)
-    return service.build_me(updated)
+    return await service.build_me(updated)
 
 
 @router.post(

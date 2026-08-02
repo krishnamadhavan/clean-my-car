@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.city import City
     from app.models.refresh_token import RefreshToken
     from app.models.society import Society
+    from app.models.vehicle import Vehicle
 
 
 class User(Base, TimestampMixin):
@@ -51,3 +52,9 @@ class User(Base, TimestampMixin):
     )
     city: Mapped[City | None] = relationship("City", foreign_keys=[city_id])
     society: Mapped[Society | None] = relationship("Society", foreign_keys=[society_id])
+    vehicle: Mapped[Vehicle | None] = relationship(
+        "Vehicle",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
