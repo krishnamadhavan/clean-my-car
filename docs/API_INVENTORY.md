@@ -179,7 +179,12 @@ This document lists **all APIs the mobile app is expected to call** for v1, grou
 **Notes**
 
 - Client should not compute pro-rate; server is source of truth.
-- Exact pro-rate formula remains open (PRD Q15) but API surface stays the same.
+- Amounts are **INR paise** (integer minor units).
+- v1 pro-rate (technical default for Q15):
+  `amount_due_now = round(full_monthly × remaining_days / days_in_month)`
+  where remaining days are inclusive of start date through month end (`Asia/Kolkata`).
+  Exterior entitlement uses society service weekdays in that window when `society_id` is provided.
+- GST presentation: `amounts_include_gst` + `gst_rate_bps` on the city pricing config.
 
 ---
 

@@ -33,6 +33,9 @@ Also refresh the short notes below if relationships change.
 | `vehicle_makes` | Car brands (ops catalog) |
 | `vehicle_models` | Models under a make + **ops-defined** size_tier |
 | `vehicles` | One vehicle per user; `model_id` + size_tier snapshot |
+| `city_pricing` | Per-city GST/currency presentation (Module 6) |
+| `city_size_prices` | Base monthly exterior price by size (paise) |
+| `city_interior_prices` | Interior add-on by frequency 0/1/2/4 (paise) |
 
 ## Relationships
 
@@ -47,6 +50,9 @@ Also refresh the short notes below if relationships change.
 | `vehicle_models.make_id` | `vehicle_makes` | `vehicle_models` | CASCADE |
 | `vehicles.user_id` | `users` | `vehicles` | CASCADE (unique) |
 | `vehicles.model_id` | `vehicle_models` | `vehicles` | RESTRICT |
+| `city_pricing.city_id` | `cities` | `city_pricing` | CASCADE (unique) |
+| `city_size_prices.pricing_id` | `city_pricing` | `city_size_prices` | CASCADE |
+| `city_interior_prices.pricing_id` | `city_pricing` | `city_interior_prices` | CASCADE |
 
 ## Alembic map
 
@@ -57,3 +63,4 @@ Also refresh the short notes below if relationships change.
 | `20260801_0003` | cities, societies, user location FKs |
 | `20260802_0004` | waitlist_entries |
 | `20260802_0005` | vehicle_makes, vehicle_models, vehicles |
+| `20260802_0006` | city_pricing, city_size_prices, city_interior_prices |
