@@ -5,5 +5,14 @@ from app.models.otp_challenge import OtpChallenge
 from app.models.refresh_token import RefreshToken
 from app.models.society import Society
 from app.models.user import User
+from app.models.waitlist import WaitlistEntry, WaitlistStatus
 
-__all__ = ["City", "OtpChallenge", "RefreshToken", "Society", "User"]
+__all__ = [
+    "City",
+    "OtpChallenge",
+    "RefreshToken",
+    "Society",
+    "User",
+    "WaitlistEntry",
+    "WaitlistStatus",
+]

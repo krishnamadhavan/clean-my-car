@@ -3,140 +3,166 @@
   Clean My Car — PostgreSQL-style ER diagram (pgAdmin-like layout)
   Update this file whenever tables/columns/FKs change (same PR as Alembic).
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="780" viewBox="0 0 1180 780" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="780" viewBox="0 0 1280 780" font-family="Helvetica, Arial, sans-serif">
   <rect width="100%" height="100%" fill="#f4f6f8"/>
   <text x="24" y="32" font-size="18" font-weight="700" fill="#1f2937">Clean My Car — Database ER Diagram</text>
-  <text x="24" y="52" font-size="12" fill="#6b7280">Aligned with modules 1–3 · PK = primary key · FK = foreign key · UK = unique</text>
+  <text x="24" y="52" font-size="12" fill="#6b7280">Aligned with modules 1–4 · PK = primary key · FK = foreign key · UK = unique</text>
 
   <!-- ========== cities ========== -->
   <g id="table-cities">
-    <rect x="60" y="90" width="260" height="210" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
-    <rect x="60" y="90" width="260" height="28" rx="4" fill="#1e3a5f"/>
-    <rect x="60" y="106" width="260" height="12" fill="#1e3a5f"/>
-    <text x="190" y="109" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">cities</text>
-    <line x1="60" y1="118" x2="320" y2="118" stroke="#374151" stroke-width="1"/>
-    <text x="72" y="138" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
-    <text x="72" y="160" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(120)</tspan></text>
-    <text x="72" y="182" font-size="12" fill="#111">state  <tspan fill="#6b7280">varchar(120)</tspan></text>
-    <text x="72" y="204" font-size="12" fill="#111">is_active  <tspan fill="#6b7280">boolean</tspan></text>
-    <text x="72" y="226" font-size="12" fill="#111">display_order  <tspan fill="#6b7280">int</tspan></text>
-    <text x="72" y="248" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="72" y="270" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <rect x="40" y="80" width="250" height="210" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="40" y="80" width="250" height="28" rx="4" fill="#1e3a5f"/>
+    <rect x="40" y="96" width="250" height="12" fill="#1e3a5f"/>
+    <text x="165" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">cities</text>
+    <line x1="40" y1="108" x2="290" y2="108" stroke="#374151" stroke-width="1"/>
+    <text x="52" y="128" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="52" y="150" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(120)</tspan></text>
+    <text x="52" y="172" font-size="12" fill="#111">state  <tspan fill="#6b7280">varchar(120)</tspan></text>
+    <text x="52" y="194" font-size="12" fill="#111">is_active  <tspan fill="#6b7280">boolean</tspan></text>
+    <text x="52" y="216" font-size="12" fill="#111">display_order  <tspan fill="#6b7280">int</tspan></text>
+    <text x="52" y="238" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="52" y="260" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
   </g>
 
   <!-- ========== societies ========== -->
   <g id="table-societies">
-    <rect x="460" y="90" width="300" height="250" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
-    <rect x="460" y="90" width="300" height="28" rx="4" fill="#1e3a5f"/>
-    <rect x="460" y="106" width="300" height="12" fill="#1e3a5f"/>
-    <text x="610" y="109" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">societies</text>
-    <line x1="460" y1="118" x2="760" y2="118" stroke="#374151" stroke-width="1"/>
-    <text x="472" y="138" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
-    <text x="472" y="160" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  city_id  <tspan fill="#6b7280">uuid → cities</tspan></text>
-    <text x="472" y="182" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(200)</tspan></text>
-    <text x="472" y="204" font-size="12" fill="#111">address_line  <tspan fill="#6b7280">varchar(255) null</tspan></text>
-    <text x="472" y="226" font-size="12" fill="#111">service_weekdays  <tspan fill="#6b7280">int[] (3 days)</tspan></text>
-    <text x="472" y="248" font-size="12" fill="#111">is_serviceable  <tspan fill="#6b7280">boolean</tspan></text>
-    <text x="472" y="270" font-size="12" fill="#111">display_order  <tspan fill="#6b7280">int</tspan></text>
-    <text x="472" y="292" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="472" y="314" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <rect x="420" y="80" width="290" height="250" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="420" y="80" width="290" height="28" rx="4" fill="#1e3a5f"/>
+    <rect x="420" y="96" width="290" height="12" fill="#1e3a5f"/>
+    <text x="565" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">societies</text>
+    <line x1="420" y1="108" x2="710" y2="108" stroke="#374151" stroke-width="1"/>
+    <text x="432" y="128" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="432" y="150" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  city_id  <tspan fill="#6b7280">uuid → cities</tspan></text>
+    <text x="432" y="172" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(200)</tspan></text>
+    <text x="432" y="194" font-size="12" fill="#111">address_line  <tspan fill="#6b7280">varchar(255) null</tspan></text>
+    <text x="432" y="216" font-size="12" fill="#111">service_weekdays  <tspan fill="#6b7280">int[] (3 days)</tspan></text>
+    <text x="432" y="238" font-size="12" fill="#111">is_serviceable  <tspan fill="#6b7280">boolean</tspan></text>
+    <text x="432" y="260" font-size="12" fill="#111">display_order  <tspan fill="#6b7280">int</tspan></text>
+    <text x="432" y="282" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="432" y="304" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+  </g>
+
+  <!-- ========== waitlist_entries ========== -->
+  <g id="table-waitlist_entries">
+    <rect x="860" y="80" width="380" height="270" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="860" y="80" width="380" height="28" rx="4" fill="#1e3a5f"/>
+    <rect x="860" y="96" width="380" height="12" fill="#1e3a5f"/>
+    <text x="1050" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">waitlist_entries</text>
+    <line x1="860" y1="108" x2="1240" y2="108" stroke="#374151" stroke-width="1"/>
+    <text x="872" y="128" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="872" y="150" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UK</tspan> <tspan font-weight="700" fill="#0369a1">FK</tspan>  user_id  <tspan fill="#6b7280">uuid → users null</tspan></text>
+    <text x="872" y="172" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  city_id  <tspan fill="#6b7280">uuid → cities</tspan></text>
+    <text x="872" y="194" font-size="12" fill="#111">society_name  <tspan fill="#6b7280">varchar(200)</tspan></text>
+    <text x="872" y="216" font-size="12" fill="#111">phone  <tspan fill="#6b7280">varchar(16)</tspan></text>
+    <text x="872" y="238" font-size="12" fill="#111">notes  <tspan fill="#6b7280">text null</tspan></text>
+    <text x="872" y="260" font-size="12" fill="#111">status  <tspan fill="#6b7280">enum pending|contacted|…</tspan></text>
+    <text x="872" y="282" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="872" y="304" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="872" y="326" font-size="11" fill="#6b7280">Module 4 — one entry per user (free-text society)</text>
   </g>
 
   <!-- ========== users ========== -->
   <g id="table-users">
-    <rect x="460" y="400" width="300" height="290" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
-    <rect x="460" y="400" width="300" height="28" rx="4" fill="#1e3a5f"/>
-    <rect x="460" y="416" width="300" height="12" fill="#1e3a5f"/>
-    <text x="610" y="419" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">users</text>
-    <line x1="460" y1="428" x2="760" y2="428" stroke="#374151" stroke-width="1"/>
-    <text x="472" y="448" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
-    <text x="472" y="470" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UK</tspan>  phone  <tspan fill="#6b7280">varchar(16)</tspan></text>
-    <text x="472" y="492" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(120) null</tspan></text>
-    <text x="472" y="514" font-size="12" fill="#111">email  <tspan fill="#6b7280">varchar(255) null</tspan></text>
-    <text x="472" y="536" font-size="12" fill="#111">is_active  <tspan fill="#6b7280">boolean</tspan></text>
-    <text x="472" y="558" font-size="12" fill="#111">deleted_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
-    <text x="472" y="580" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  city_id  <tspan fill="#6b7280">uuid → cities null</tspan></text>
-    <text x="472" y="602" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  society_id  <tspan fill="#6b7280">uuid → societies null</tspan></text>
-    <text x="472" y="624" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="472" y="646" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <rect x="420" y="400" width="290" height="290" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="420" y="400" width="290" height="28" rx="4" fill="#1e3a5f"/>
+    <rect x="420" y="416" width="290" height="12" fill="#1e3a5f"/>
+    <text x="565" y="419" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">users</text>
+    <line x1="420" y1="428" x2="710" y2="428" stroke="#374151" stroke-width="1"/>
+    <text x="432" y="448" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="432" y="470" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UK</tspan>  phone  <tspan fill="#6b7280">varchar(16)</tspan></text>
+    <text x="432" y="492" font-size="12" fill="#111">name  <tspan fill="#6b7280">varchar(120) null</tspan></text>
+    <text x="432" y="514" font-size="12" fill="#111">email  <tspan fill="#6b7280">varchar(255) null</tspan></text>
+    <text x="432" y="536" font-size="12" fill="#111">is_active  <tspan fill="#6b7280">boolean</tspan></text>
+    <text x="432" y="558" font-size="12" fill="#111">deleted_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
+    <text x="432" y="580" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  city_id  <tspan fill="#6b7280">uuid → cities null</tspan></text>
+    <text x="432" y="602" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  society_id  <tspan fill="#6b7280">uuid → societies null</tspan></text>
+    <text x="432" y="624" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="432" y="646" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
   </g>
 
   <!-- ========== refresh_tokens ========== -->
   <g id="table-refresh_tokens">
-    <rect x="860" y="430" width="280" height="220" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
-    <rect x="860" y="430" width="280" height="28" rx="4" fill="#1e3a5f"/>
-    <rect x="860" y="446" width="280" height="12" fill="#1e3a5f"/>
-    <text x="1000" y="449" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">refresh_tokens</text>
-    <line x1="860" y1="458" x2="1140" y2="458" stroke="#374151" stroke-width="1"/>
-    <text x="872" y="478" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
-    <text x="872" y="500" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  user_id  <tspan fill="#6b7280">uuid → users</tspan></text>
-    <text x="872" y="522" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UK</tspan>  token_hash  <tspan fill="#6b7280">varchar(64)</tspan></text>
-    <text x="872" y="544" font-size="12" fill="#111">expires_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="872" y="566" font-size="12" fill="#111">revoked_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
-    <text x="872" y="588" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="872" y="610" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <rect x="860" y="420" width="280" height="220" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="860" y="420" width="280" height="28" rx="4" fill="#1e3a5f"/>
+    <rect x="860" y="436" width="280" height="12" fill="#1e3a5f"/>
+    <text x="1000" y="439" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">refresh_tokens</text>
+    <line x1="860" y1="448" x2="1140" y2="448" stroke="#374151" stroke-width="1"/>
+    <text x="872" y="468" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="872" y="490" font-size="12" fill="#111"><tspan font-weight="700" fill="#0369a1">FK</tspan>  user_id  <tspan fill="#6b7280">uuid → users</tspan></text>
+    <text x="872" y="512" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UK</tspan>  token_hash  <tspan fill="#6b7280">varchar(64)</tspan></text>
+    <text x="872" y="534" font-size="12" fill="#111">expires_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="872" y="556" font-size="12" fill="#111">revoked_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
+    <text x="872" y="578" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="872" y="600" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
   </g>
 
   <!-- ========== otp_challenges (standalone) ========== -->
   <g id="table-otp_challenges">
-    <rect x="60" y="400" width="280" height="230" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
-    <rect x="60" y="400" width="280" height="28" rx="4" fill="#4b5563"/>
-    <rect x="60" y="416" width="280" height="12" fill="#4b5563"/>
-    <text x="200" y="419" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">otp_challenges</text>
-    <line x1="60" y1="428" x2="340" y2="428" stroke="#374151" stroke-width="1"/>
-    <text x="72" y="448" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
-    <text x="72" y="470" font-size="12" fill="#111">phone  <tspan fill="#6b7280">varchar(16) indexed</tspan></text>
-    <text x="72" y="492" font-size="12" fill="#111">code_hash  <tspan fill="#6b7280">varchar(64)</tspan></text>
-    <text x="72" y="514" font-size="12" fill="#111">expires_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="72" y="536" font-size="12" fill="#111">attempt_count  <tspan fill="#6b7280">int</tspan></text>
-    <text x="72" y="558" font-size="12" fill="#111">consumed_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
-    <text x="72" y="580" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="72" y="602" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
-    <text x="72" y="622" font-size="11" fill="#6b7280">no FK to users (pre-signup OTP)</text>
+    <rect x="40" y="400" width="260" height="230" rx="4" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+    <rect x="40" y="400" width="260" height="28" rx="4" fill="#4b5563"/>
+    <rect x="40" y="416" width="260" height="12" fill="#4b5563"/>
+    <text x="170" y="419" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">otp_challenges</text>
+    <line x1="40" y1="428" x2="300" y2="428" stroke="#374151" stroke-width="1"/>
+    <text x="52" y="448" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id  <tspan fill="#6b7280">uuid</tspan></text>
+    <text x="52" y="470" font-size="12" fill="#111">phone  <tspan fill="#6b7280">varchar(16) indexed</tspan></text>
+    <text x="52" y="492" font-size="12" fill="#111">code_hash  <tspan fill="#6b7280">varchar(64)</tspan></text>
+    <text x="52" y="514" font-size="12" fill="#111">expires_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="52" y="536" font-size="12" fill="#111">attempt_count  <tspan fill="#6b7280">int</tspan></text>
+    <text x="52" y="558" font-size="12" fill="#111">consumed_at  <tspan fill="#6b7280">timestamptz null</tspan></text>
+    <text x="52" y="580" font-size="12" fill="#111">created_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="52" y="602" font-size="12" fill="#111">updated_at  <tspan fill="#6b7280">timestamptz</tspan></text>
+    <text x="52" y="622" font-size="11" fill="#6b7280">no FK to users (pre-signup OTP)</text>
   </g>
 
   <!-- Relationships: cities 1 — N societies (CASCADE) -->
-  <line x1="320" y1="180" x2="460" y2="180" stroke="#111827" stroke-width="1.5"/>
-  <!-- crow's foot at societies -->
-  <polyline points="450,172 460,180 450,188" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <line x1="320" y1="172" x2="320" y2="188" stroke="#111827" stroke-width="1.5"/>
-  <text x="370" y="168" font-size="11" fill="#374151">1</text>
-  <text x="430" y="168" font-size="11" fill="#374151">N</text>
-  <text x="355" y="198" font-size="10" fill="#6b7280">ON DELETE CASCADE</text>
+  <line x1="290" y1="170" x2="420" y2="170" stroke="#111827" stroke-width="1.5"/>
+  <polyline points="410,162 420,170 410,178" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <line x1="290" y1="162" x2="290" y2="178" stroke="#111827" stroke-width="1.5"/>
+  <text x="340" y="158" font-size="11" fill="#374151">1</text>
+  <text x="395" y="158" font-size="11" fill="#374151">N</text>
+  <text x="320" y="190" font-size="10" fill="#6b7280">ON DELETE CASCADE</text>
 
   <!-- cities 1 — N users (SET NULL) optional -->
-  <path d="M 190 300 L 190 360 L 460 520" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <polyline points="450,512 460,520 450,528" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <line x1="185" y1="300" x2="195" y2="300" stroke="#111827" stroke-width="1.5"/>
-  <circle cx="190" cy="308" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <text x="200" y="350" font-size="10" fill="#6b7280">city_id SET NULL</text>
+  <path d="M 165 290 L 165 360 L 420 520" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <polyline points="410,512 420,520 410,528" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <line x1="160" y1="290" x2="170" y2="290" stroke="#111827" stroke-width="1.5"/>
+  <circle cx="165" cy="298" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <text x="175" y="350" font-size="10" fill="#6b7280">city_id SET NULL</text>
 
   <!-- societies 1 — N users (SET NULL) -->
-  <line x1="610" y1="340" x2="610" y2="400" stroke="#111827" stroke-width="1.5"/>
-  <polyline points="602,390 610,400 618,390" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <line x1="602" y1="340" x2="618" y2="340" stroke="#111827" stroke-width="1.5"/>
-  <circle cx="610" cy="348" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <text x="620" y="375" font-size="10" fill="#6b7280">society_id SET NULL</text>
+  <line x1="565" y1="330" x2="565" y2="400" stroke="#111827" stroke-width="1.5"/>
+  <polyline points="557,390 565,400 573,390" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <line x1="557" y1="330" x2="573" y2="330" stroke="#111827" stroke-width="1.5"/>
+  <circle cx="565" cy="338" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <text x="575" y="370" font-size="10" fill="#6b7280">society_id SET NULL</text>
+
+  <!-- cities 1 — N waitlist_entries CASCADE -->
+  <path d="M 290 200 L 820 200 L 860 200" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <polyline points="850,192 860,200 850,208" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <text x="740" y="190" font-size="10" fill="#6b7280">city_id CASCADE</text>
+
+  <!-- users 1 — 0..1 waitlist_entries SET NULL (unique) -->
+  <path d="M 710 480 L 800 480 L 800 200 L 860 200" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <circle cx="800" cy="480" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
+  <text x="720" y="470" font-size="10" fill="#6b7280">user_id SET NULL · UK</text>
 
   <!-- users 1 — N refresh_tokens CASCADE -->
-  <line x1="760" y1="540" x2="860" y2="540" stroke="#111827" stroke-width="1.5"/>
-  <line x1="760" y1="532" x2="760" y2="548" stroke="#111827" stroke-width="1.5"/>
+  <line x1="710" y1="540" x2="860" y2="540" stroke="#111827" stroke-width="1.5"/>
+  <line x1="710" y1="532" x2="710" y2="548" stroke="#111827" stroke-width="1.5"/>
   <polyline points="850,532 860,540 850,548" fill="none" stroke="#111827" stroke-width="1.5"/>
-  <text x="780" y="528" font-size="11" fill="#374151">1</text>
+  <text x="760" y="528" font-size="11" fill="#374151">1</text>
   <text x="835" y="528" font-size="11" fill="#374151">N</text>
-  <text x="775" y="560" font-size="10" fill="#6b7280">ON DELETE CASCADE</text>
+  <text x="755" y="560" font-size="10" fill="#6b7280">ON DELETE CASCADE</text>
 
   <!-- Legend -->
   <g id="legend">
-    <rect x="860" y="90" width="280" height="130" rx="4" fill="#fff" stroke="#9ca3af" stroke-width="1"/>
-    <text x="875" y="112" font-size="12" font-weight="700" fill="#111">Legend</text>
-    <text x="875" y="134" font-size="11" fill="#b45309" font-weight="700">PK</text>
-    <text x="900" y="134" font-size="11" fill="#374151">Primary key</text>
-    <text x="875" y="154" font-size="11" fill="#0369a1" font-weight="700">FK</text>
-    <text x="900" y="154" font-size="11" fill="#374151">Foreign key</text>
-    <text x="875" y="174" font-size="11" fill="#7c3aed" font-weight="700">UK</text>
-    <text x="900" y="174" font-size="11" fill="#374151">Unique</text>
-    <circle cx="882" cy="194" r="4" fill="none" stroke="#111827" stroke-width="1.5"/>
-    <text x="900" y="198" font-size="11" fill="#374151">Optional relationship (nullable FK)</text>
+    <rect x="40" y="660" width="280" height="100" rx="4" fill="#fff" stroke="#9ca3af" stroke-width="1"/>
+    <text x="55" y="682" font-size="12" font-weight="700" fill="#111">Legend</text>
+    <text x="55" y="704" font-size="11" fill="#b45309" font-weight="700">PK</text>
+    <text x="80" y="704" font-size="11" fill="#374151">Primary key</text>
+    <text x="55" y="724" font-size="11" fill="#0369a1" font-weight="700">FK</text>
+    <text x="80" y="724" font-size="11" fill="#374151">Foreign key</text>
+    <text x="55" y="744" font-size="11" fill="#7c3aed" font-weight="700">UK</text>
+    <text x="80" y="744" font-size="11" fill="#374151">Unique</text>
   </g>
 </svg>

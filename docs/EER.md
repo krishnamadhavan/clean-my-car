@@ -29,6 +29,7 @@ Also refresh the short notes below if relationships change.
 | `users` | Accounts; optional `city_id` / `society_id` |
 | `refresh_tokens` | Hashed refresh sessions |
 | `otp_challenges` | Phone OTP challenges (no user FK) |
+| `waitlist_entries` | Demand capture when society not live (Module 4); one per user |
 
 ## Relationships
 
@@ -38,6 +39,8 @@ Also refresh the short notes below if relationships change.
 | `users.city_id` | `cities` | `users` | SET NULL |
 | `users.society_id` | `societies` | `users` | SET NULL |
 | `refresh_tokens.user_id` | `users` | `refresh_tokens` | CASCADE |
+| `waitlist_entries.user_id` | `users` | `waitlist_entries` | SET NULL (unique when set — one entry per user) |
+| `waitlist_entries.city_id` | `cities` | `waitlist_entries` | CASCADE |
 
 ## Alembic map
 
@@ -46,3 +49,4 @@ Also refresh the short notes below if relationships change.
 | `20260731_0001` | users, otp_challenges, refresh_tokens |
 | `20260801_0002` | users.deleted_at |
 | `20260801_0003` | cities, societies, user location FKs |
+| `20260802_0004` | waitlist_entries |
