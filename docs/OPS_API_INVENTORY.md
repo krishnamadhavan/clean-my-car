@@ -92,7 +92,7 @@ What must exist before consumer APIs work end-to-end. **Seed today → Ops APIs 
 | Users / sessions | `users`, `refresh_tokens`, `otp_*` | Auth/profile — **user-owned**, not catalog | **1–2** (support only) |
 | User vehicle instance | `vehicles` | VEH-01–04 — **user-owned** | **5** (read/correct only if needed) |
 
-**Implementation status (codebase):** Ops Modules **1** (auth), **2** (users), and **3** (cities/societies) are implemented under `/api/v1/ops/*`. Vehicle catalog (5) and pricing (6) are still seed/SQL until those ops routes land. Consumer error e.g. `pricing_not_found` means Module **6** master data is missing for that city.
+**Implementation status (codebase):** Ops Modules **1** (auth), **2** (users), **3** (cities/societies), and **4** (waitlist triage) are implemented under `/api/v1/ops/*`. Vehicle catalog (5) and pricing (6) are still seed/SQL until those ops routes land. Consumer error e.g. `pricing_not_found` means Module **6** master data is missing for that city.
 
 ---
 
