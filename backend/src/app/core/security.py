@@ -42,12 +42,18 @@ def create_access_token(
     subject: UUID,
     settings: Settings,
     extra_claims: dict[str, Any] | None = None,
+    token_type: str = "access",
 ) -> str:
+    """Issue a JWT access token.
+
+    ``token_type`` is ``access`` for consumer users and ``ops_access`` for ops operators
+    so the two surfaces cannot share tokens.
+    """
     now = datetime.now(UTC)
     expire = now + timedelta(minutes=settings.access_token_expire_minutes)
     payload: dict[str, Any] = {
         "sub": str(subject),
-        "type": "access",
+        "type": token_type,
         "iat": now,
         "exp": expire,
     }

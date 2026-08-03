@@ -36,6 +36,8 @@ Also refresh the short notes below if relationships change.
 | `city_pricing` | Per-city GST/currency presentation (Module 6) |
 | `city_size_prices` | Base monthly exterior price by size (paise) |
 | `city_interior_prices` | Interior add-on by frequency 0/1/2/4 (paise) |
+| `ops_operators` | Ops staff (email/password, roles) |
+| `ops_refresh_tokens` | Ops session refresh tokens (hashed) |
 
 ## Relationships
 
@@ -53,6 +55,7 @@ Also refresh the short notes below if relationships change.
 | `city_pricing.city_id` | `cities` | `city_pricing` | CASCADE (unique) |
 | `city_size_prices.pricing_id` | `city_pricing` | `city_size_prices` | CASCADE |
 | `city_interior_prices.pricing_id` | `city_pricing` | `city_interior_prices` | CASCADE |
+| `ops_refresh_tokens.operator_id` | `ops_operators` | `ops_refresh_tokens` | CASCADE |
 
 ## Alembic map
 
@@ -64,3 +67,4 @@ Also refresh the short notes below if relationships change.
 | `20260802_0004` | waitlist_entries |
 | `20260802_0005` | vehicle_makes, vehicle_models, vehicles |
 | `20260802_0006` | city_pricing, city_size_prices, city_interior_prices |
+| `20260803_0007` | ops_operators, ops_refresh_tokens |

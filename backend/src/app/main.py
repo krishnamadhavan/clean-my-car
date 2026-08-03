@@ -30,6 +30,15 @@ OPS_PATH_PREFIX = "/api/v1/ops"
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    # Optional ops bootstrap operator from env when that email is not present yet
+    settings = get_settings()
+    if settings.ops_bootstrap_email and settings.ops_bootstrap_password:
+        from app.db.session import AsyncSessionLocal
+        from app.services.ops_auth import OpsAuthService
+
+        async with AsyncSessionLocal() as session:
+            await OpsAuthService(session, settings).ensure_bootstrap_operator()
+
     yield
     from app.db.session import dispose_engine
 

@@ -47,6 +47,29 @@ Also: ReDoc at `/redoc` (consumer) and `/ops/redoc` (ops).
 
 Ops inventory: [`docs/OPS_API_INVENTORY.md`](../docs/OPS_API_INVENTORY.md).
 
+### Ops auth (Module 1)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/v1/ops/auth/login` | Email/password → ops access + refresh |
+| POST | `/api/v1/ops/auth/logout` | Revoke ops refresh token |
+| POST | `/api/v1/ops/auth/token/refresh` | Rotate ops tokens |
+| GET | `/api/v1/ops/auth/me` | Current operator (`Authorization: Bearer` ops JWT) |
+
+Ops JWTs use `type=ops_access` and **cannot** call consumer `/me` routes (and consumer tokens cannot call ops).
+
+**Bootstrap operator** (optional, local/dev): set env vars, then restart the API.
+Creates the user if that email is not already present (safe if other operators exist):
+
+```bash
+OPS_BOOTSTRAP_EMAIL=admin@example.com
+OPS_BOOTSTRAP_PASSWORD=changeme12
+OPS_BOOTSTRAP_NAME=Admin
+```
+
+Then: `make restart` (or restart `api`) and `POST /api/v1/ops/auth/login`.
+
+
 ## Package layout
 
 ```
