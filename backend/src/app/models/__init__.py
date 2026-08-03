@@ -1,6 +1,8 @@
 """ORM models package — import models so metadata is complete for Alembic."""
 
 from app.models.city import City
+from app.models.ops_operator import OpsOperator
+from app.models.ops_refresh_token import OpsRefreshToken
 from app.models.otp_challenge import OtpChallenge
 from app.models.pricing import CityInteriorPrice, CityPricing, CitySizePrice
 from app.models.refresh_token import RefreshToken
@@ -14,6 +16,8 @@ __all__ = [
     "CityInteriorPrice",
     "CityPricing",
     "CitySizePrice",
+    "OpsOperator",
+    "OpsRefreshToken",
     "OtpChallenge",
     "RefreshToken",
     "Society",

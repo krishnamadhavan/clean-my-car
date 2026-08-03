@@ -52,6 +52,11 @@ class Settings(BaseSettings):
         alias="ACCOUNT_DELETION_COOLOFF_DAYS",
     )
 
+    # Ops Module 1 — optional bootstrap operator (created on API startup if email missing)
+    ops_bootstrap_email: str | None = Field(default=None, alias="OPS_BOOTSTRAP_EMAIL")
+    ops_bootstrap_password: str | None = Field(default=None, alias="OPS_BOOTSTRAP_PASSWORD")
+    ops_bootstrap_name: str | None = Field(default=None, alias="OPS_BOOTSTRAP_NAME")
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def async_database_url(self) -> str:
