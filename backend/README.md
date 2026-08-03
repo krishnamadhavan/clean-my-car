@@ -28,11 +28,20 @@ make down        # stop stack
 
 ## API docs
 
-With the stack running:
+With the stack running, **two** Swagger UIs:
 
-- OpenAPI UI: http://localhost:8000/docs
+| Surface | Swagger UI | OpenAPI JSON | Base path |
+|---------|------------|--------------|-----------|
+| **Consumer** (iOS / public product) | http://localhost:8000/docs | http://localhost:8000/openapi.json | `/api/v1` |
+| **Ops** (master data / field tools) | http://localhost:8000/ops/docs | http://localhost:8000/ops/openapi.json | `/api/v1/ops` |
+
+Also: ReDoc at `/redoc` (consumer) and `/ops/redoc` (ops).
+
 - Health: http://localhost:8000/api/v1/health
+- Ops health: http://localhost:8000/api/v1/ops/health
 - Ready (DB): http://localhost:8000/api/v1/ready
+
+Ops inventory: [`docs/OPS_API_INVENTORY.md`](../docs/OPS_API_INVENTORY.md).
 
 ## Package layout
 
