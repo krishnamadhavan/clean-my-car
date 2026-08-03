@@ -114,10 +114,13 @@ jobs:
       OTP_MAX_REQUESTS_PER_HOUR: "100"
       POSTGRES_USER: cleanmycar
       POSTGRES_PASSWORD: cleanmycar
-      POSTGRES_DB: cleanmycar
+      # Service creates "cleanmycar"; tests create/drop cleanmycar_test via conftest
+      POSTGRES_APP_DB: cleanmycar
+      POSTGRES_TEST_DB: cleanmycar_test
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
-      DATABASE_URL: postgresql+asyncpg://cleanmycar:cleanmycar@localhost:5432/cleanmycar
+      OPS_BOOTSTRAP_EMAIL: ""
+      OPS_BOOTSTRAP_PASSWORD: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -133,9 +136,6 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen --group dev
-
-      - name: Run migrations
-        run: uv run alembic upgrade head
 
       - name: Run pytest with coverage (≥95%)
         run: >

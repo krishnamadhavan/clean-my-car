@@ -105,12 +105,24 @@ migration: ## Create a new Alembic revision (usage: make migration m="add users"
 	fi
 	$(COMPOSE) exec $(API_SERVICE) alembic revision --autogenerate -m "$(m)"
 
+# Ephemeral test DB (created/dropped by pytest conftest — not the app DB)
+TEST_DB ?= cleanmycar_test
 # Shared env + mounts for test / coverage one-off containers
 TEST_RUN = $(COMPOSE) run --rm \
 	-e APP_ENV=test \
 	-e JWT_SECRET_KEY=test-secret-key-not-for-production \
 	-e OTP_RESEND_COOLDOWN_SECONDS=0 \
 	-e OTP_MAX_REQUESTS_PER_HOUR=100 \
+	-e POSTGRES_HOST=db \
+	-e POSTGRES_PORT=5432 \
+	-e POSTGRES_USER=$${POSTGRES_USER:-cleanmycar} \
+	-e POSTGRES_PASSWORD=$${POSTGRES_PASSWORD:-cleanmycar} \
+	-e POSTGRES_APP_DB=$${POSTGRES_DB:-cleanmycar} \
+	-e POSTGRES_TEST_DB=$(TEST_DB) \
+	-e POSTGRES_DB=$(TEST_DB) \
+	-e DATABASE_URL=postgresql+asyncpg://$${POSTGRES_USER:-cleanmycar}:$${POSTGRES_PASSWORD:-cleanmycar}@db:5432/$(TEST_DB) \
+	-e OPS_BOOTSTRAP_EMAIL= \
+	-e OPS_BOOTSTRAP_PASSWORD= \
 	-v "$(CURDIR)/$(BACKEND_DIR)/tests:/app/tests" \
 	-v "$(CURDIR)/$(BACKEND_DIR)/src:/app/src" \
 	-v "$(CURDIR)/$(BACKEND_DIR)/alembic:/app/alembic" \
@@ -118,18 +130,18 @@ TEST_RUN = $(COMPOSE) run --rm \
 	-v "$(CURDIR)/$(BACKEND_DIR)/uv.lock:/app/uv.lock"
 
 .PHONY: test
-test: ## Run backend tests in a one-off container
+test: ## Run backend tests against ephemeral DB cleanmycar_test (create→migrate→pytest→drop)
 	$(TEST_RUN) \
 		$(API_SERVICE) \
-		sh -c "uv sync --frozen --group dev && alembic upgrade head && pytest -q"
+		sh -c "uv sync --frozen --group dev && pytest -q"
 
 .PHONY: coverage
-coverage: ## Run tests with coverage (term + HTML under backend/htmlcov)
+coverage: ## Run tests with coverage on ephemeral test DB (HTML: backend/htmlcov)
 	@mkdir -p "$(BACKEND_DIR)/htmlcov"
 	$(TEST_RUN) \
 		-v "$(CURDIR)/$(BACKEND_DIR)/htmlcov:/app/htmlcov" \
 		$(API_SERVICE) \
-		sh -c "uv sync --frozen --group dev && alembic upgrade head && \
+		sh -c "uv sync --frozen --group dev && \
 			pytest -q \
 				--cov=app \
 				--cov-report=term-missing \

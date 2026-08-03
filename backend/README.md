@@ -19,12 +19,16 @@ Prefer Make targets from the **repository root** (see root `Makefile`).
 # from monorepo root
 make up          # start API + Postgres
 make logs        # follow logs
-make migrate     # run Alembic migrations
-make test        # run backend tests in container
-make coverage    # tests + coverage ≥95% (HTML: backend/htmlcov/index.html)
+make migrate     # run Alembic migrations (app DB)
+make test        # ephemeral test DB cleanmycar_test → pytest → drop
+make coverage    # same as test + coverage ≥95% (HTML: backend/htmlcov/index.html)
 make pre-commit-install  # once: enable pre-commit git hooks (Ruff)
 make down        # stop stack
 ```
+
+**Tests use a separate database** (`cleanmycar_test` by default). Pytest creates it,
+runs migrations, then drops it when the suite finishes. The running app keeps using
+`cleanmycar` (or your normal `POSTGRES_DB`).
 
 ## API docs
 
