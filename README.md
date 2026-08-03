@@ -25,7 +25,8 @@ make ready             # DB connectivity
 | Resource | URL |
 |----------|-----|
 | API | http://localhost:8000 |
-| Swagger | http://localhost:8000/docs |
+| Swagger (consumer) | http://localhost:8000/docs |
+| Swagger (ops) | http://localhost:8000/ops/docs |
 | Health | http://localhost:8000/api/v1/health |
 | Ready | http://localhost:8000/api/v1/ready |
 
@@ -131,5 +132,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## Product docs
 
 - [Project Requirements Document](docs/PRD.md)
-- [API Inventory](docs/API_INVENTORY.md)
+- [API Inventory (consumer)](docs/API_INVENTORY.md)
+- [Ops API Inventory](docs/OPS_API_INVENTORY.md)
 - [Database ER diagram](docs/diagrams/database-er.svg) — **update on every schema change** ([notes](docs/EER.md))

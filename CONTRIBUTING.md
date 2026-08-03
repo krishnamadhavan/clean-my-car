@@ -91,7 +91,8 @@ make lint              # ruff check
 make format            # ruff fix + format
 ```
 
-API docs: http://localhost:8000/docs
+API docs (consumer): http://localhost:8000/docs
+API docs (ops): http://localhost:8000/ops/docs
 
 **Coverage gate:** total coverage for `app` must stay **≥ 95%** (`fail_under` in `pyproject.toml`, enforced by `make coverage` and CI).
 

@@ -9,6 +9,7 @@
 | **Primary consumer** | Native iOS app |
 | **Base path (proposed)** | `/api/v1` |
 | **Auth model (proposed)** | Bearer access token after phone OTP (refresh token optional/TBD) |
+| **Ops companion** | [OPS_API_INVENTORY.md](./OPS_API_INVENTORY.md) — internal/admin APIs & master data (same module map) |
 
 ---
 
@@ -367,7 +368,7 @@ This document lists **all APIs the mobile app is expected to call** for v1, grou
 **Auth:** separate ops credentials / VPN / admin token — not end-user JWT.
 **Form factor:** thin internal client or scripts; **not** a full ops suite (O7/O8 Won’t).
 
-Catalog/pricing seeding for ops may be admin scripts or a later internal admin API (`POST /ops/cities`, etc.) — **out of consumer inventory**; treat as platform ops until productized.
+Catalog/pricing seeding and city/society/vehicle/pricing admin APIs live in the **ops inventory**: [OPS_API_INVENTORY.md](./OPS_API_INVENTORY.md). Wash complete/miss (OPS-01–04 below) are also specified there as OPS-WASH-*. Until those are implemented, use seeds/SQL for master data.
 
 ---
 
