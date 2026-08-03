@@ -77,9 +77,23 @@ ops-ui/
 - Prefer fluid grids (`minmax`, `auto-fill`), `flex-wrap`, and `clamp()` over fixed widths.
 - Wide tables/code: wrap in `.scroll-x` or stack columns on small viewports.
 
+## Implemented screens (Modules 1–6)
+
+| Route | Module | Purpose |
+|-------|--------|---------|
+| `/login` | 1 | Operator email/password login |
+| `/` | — | Dashboard + waitlist/pricing gap stats |
+| `/users`, `/users/:id` | 2 | Search, detail, deactivate/reactivate |
+| `/users/:id/vehicle` | 5 | Inspect/correct user vehicle |
+| `/cities`, `/cities/:id` | 3 | Cities + societies CRUD |
+| `/waitlist`, `/waitlist/:id` | 4 | List/filter/triage |
+| `/vehicles`, `/vehicles/:makeId` | 5 | Makes + models + size_tier |
+| `/pricing`, `/pricing/:cityId`, `/pricing/quote` | 6 | Tariffs, matrix, quote preview |
+
+Requires backend with bootstrap ops user (see root `.env.example` `OPS_BOOTSTRAP_*`) and CORS origins including the UI origin.
+
 ## Out of scope (for now)
 
-- Operator login / token storage
-- API client modules / TanStack Query
-- Docker image for the UI (backend remains the compose focus)
-- Production deploy pipeline beyond optional CI build
+- Role-based nav gating
+- Docker image for the UI
+- E2E browser tests

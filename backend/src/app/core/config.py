@@ -57,6 +57,16 @@ class Settings(BaseSettings):
     ops_bootstrap_password: str | None = Field(default=None, alias="OPS_BOOTSTRAP_PASSWORD")
     ops_bootstrap_name: str | None = Field(default=None, alias="OPS_BOOTSTRAP_NAME")
 
+    # Browser origins allowed to call the API (ops-ui, etc.). Comma-separated.
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000",
+        alias="CORS_ORIGINS",
+    )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [part.strip() for part in self.cors_origins.split(",") if part.strip()]
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def async_database_url(self) -> str:
