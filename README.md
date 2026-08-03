@@ -5,6 +5,7 @@ Monorepo for the **Clean My Car** apartment car-cleaning subscription product.
 | Path | Status | Description |
 |------|--------|-------------|
 | `backend/` | Active | FastAPI + PostgreSQL API |
+| `ops-ui/` | Scaffold | Nuxt ops portal (internal dashboard) |
 | `ios/` | Planned | Native iOS client |
 | `docs/` | Active | PRD and product docs |
 
@@ -27,6 +28,7 @@ make ready             # DB connectivity
 | API | http://localhost:8000 |
 | Swagger (consumer) | http://localhost:8000/docs |
 | Swagger (ops) | http://localhost:8000/ops/docs |
+| Ops UI (Nuxt) | http://localhost:3000 |
 | Health | http://localhost:8000/api/v1/health |
 | Ready | http://localhost:8000/api/v1/ready |
 
@@ -37,11 +39,23 @@ make test          # backend tests
 make coverage      # tests + coverage (≥95% required; report in backend/htmlcov/)
 make format        # ruff fix + format
 make lint          # ruff check
+make ops-ui-install   # npm install for ops portal
+make ops-ui-dev       # Nuxt dev server → http://localhost:3000
 make pre-commit-install   # once: run hooks before every git commit
 make pre-commit    # ruff + file checks on all files
 make down          # stop stack
 make help          # all targets
 ```
+
+### Ops UI (scaffold)
+
+```bash
+make up                 # backend + Postgres (if calling APIs later)
+make ops-ui-install
+make ops-ui-dev         # http://localhost:3000
+```
+
+See [`ops-ui/README.md`](ops-ui/README.md). App screens and auth are not built yet; ops APIs are under `/api/v1/ops/*`.
 
 ## Monorepo layout
 
@@ -53,6 +67,7 @@ clean-my-car/
 │   ├── tests/
 │   ├── Dockerfile
 │   └── pyproject.toml
+├── ops-ui/               # Nuxt ops portal (internal)
 ├── docs/                 # product requirements, design notes
 ├── ios/                  # (future) native iOS app
 ├── docker-compose.yml    # local stack: api + db
@@ -61,7 +76,7 @@ clean-my-car/
 └── README.md
 ```
 
-Compose and Make live at the **repo root** so future services (`ios` tooling, workers, etc.) share one developer entrypoint.
+Compose and Make live at the **repo root** so backend, ops UI, and future services share one developer entrypoint.
 
 ## CI / GitHub Actions
 
@@ -69,10 +84,10 @@ Workflows live under `.github/workflows/`.
 
 | Workflow | When | Stages |
 |----------|------|--------|
-| **CI** (`ci.yml`) | Push/PR to `main` | **Lint** → **Test** (Postgres) → **Docker build** |
+| **CI** (`ci.yml`) | Push/PR to `main` | Backend: **Lint** → **Test** → **Docker build**; Ops UI: **Build** (path-filtered) |
 | **PR Title** (`pr-title.yml`) | Pull requests | Conventional Commits title check |
 
-Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). The final **`CI`** job is the single gate to mark required in branch protection.
+Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). Ops UI build runs when `ops-ui/**` changes. The final **`CI`** job is the single gate to mark required in branch protection.
 
 ### Branch protection (recommended)
 
@@ -110,7 +125,7 @@ All commits **must** follow [Conventional Commits](https://www.conventionalcommi
 
 **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
-**Scopes (examples):** `api`, `db`, `auth`, `docker`, `ios`, `docs`, `make`
+**Scopes (examples):** `api`, `db`, `auth`, `docker`, `ios`, `ops-ui`, `docs`, `make`
 
 **Examples:**
 
