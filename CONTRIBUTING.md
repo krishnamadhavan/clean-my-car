@@ -3,6 +3,7 @@
 ## Monorepo notes
 
 - Backend work lives under `backend/`.
+- Ops portal (Nuxt) lives under `ops-ui/` — scaffold only; use `make ops-ui-dev`.
 - iOS will live under `ios/` (not scaffolded yet).
 - Use root `Makefile` and `docker-compose.yml` for local backend development.
 - Do not commit secrets. Use `.env` (gitignored); start from `.env.example`.
@@ -32,7 +33,7 @@ We use **Conventional Commits** so history stays readable and automation (change
 - **description:** imperative mood, lowercase start preferred, no trailing period
   Good: `add readiness probe`
   Bad: `Added readiness probe.`
-- **scope:** optional but preferred when touching a clear area (`api`, `db`, `docker`, `ios`, `docs`)
+- **scope:** optional but preferred when touching a clear area (`api`, `db`, `docker`, `ios`, `ops-ui`, `docs`)
 
 ### Types
 

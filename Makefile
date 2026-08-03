@@ -7,6 +7,7 @@ COMPOSE        := docker compose
 API_SERVICE    := api
 DB_SERVICE     := db
 BACKEND_DIR    := backend
+OPS_UI_DIR     := ops-ui
 
 # Colors (optional nicety for help)
 CYAN  := \033[36m
@@ -218,6 +219,26 @@ db-reset: ## Drop DB volume and recreate stack (destructive)
 	@$(MAKE) migrate || true
 
 # ---------------------------------------------------------------------------
+# Ops UI (Nuxt portal under ops-ui/)
+# ---------------------------------------------------------------------------
+
+.PHONY: ops-ui-install
+ops-ui-install: ## Install ops-ui npm dependencies
+	cd $(OPS_UI_DIR) && npm install
+
+.PHONY: ops-ui-dev
+ops-ui-dev: ## Run Nuxt ops portal on http://localhost:3000
+	cd $(OPS_UI_DIR) && npm run dev
+
+.PHONY: ops-ui-build
+ops-ui-build: ## Production build of ops-ui
+	cd $(OPS_UI_DIR) && npm run build
+
+.PHONY: ops-ui-preview
+ops-ui-preview: ## Preview production ops-ui build
+	cd $(OPS_UI_DIR) && npm run preview
+
+# ---------------------------------------------------------------------------
 # Git helpers (conventional commits)
 # ---------------------------------------------------------------------------
 
@@ -226,12 +247,13 @@ commit-help: ## Print conventional commit format reminder
 	@echo "Conventional Commits: <type>(optional-scope): <description>"
 	@echo ""
 	@echo "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
-	@echo "Scopes (examples): api, db, auth, docker, ios, docs"
+	@echo "Scopes (examples): api, db, auth, docker, ios, docs, ops-ui"
 	@echo ""
 	@echo "Examples:"
 	@echo "  feat(api): add health and readiness endpoints"
 	@echo "  fix(db): correct async session cleanup"
 	@echo "  chore(docker): pin postgres to 16-alpine"
+	@echo "  chore(ops-ui): scaffold Nuxt ops portal"
 	@echo "  docs: update monorepo README"
 	@echo ""
 	@echo "Breaking change: footer 'BREAKING CHANGE: ...' or ! after type/scope"

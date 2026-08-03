@@ -67,12 +67,19 @@ dmypy.json
 
 
 # ---------------------------------------------------------------------------
-# Node (future tooling) / general
+# Node / Nuxt (ops-ui and future frontends)
 # ---------------------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+ops-ui/.nuxt/
+ops-ui/.output/
+ops-ui/.data/
+ops-ui/.nitro/
+ops-ui/.cache/
+ops-ui/dist/
 
 # ---------------------------------------------------------------------------
 # iOS / Xcode (future ios/ app)
