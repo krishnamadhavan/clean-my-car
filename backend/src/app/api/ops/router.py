@@ -6,8 +6,9 @@ Inventory: ``docs/OPS_API_INVENTORY.md``.
 
 from fastapi import APIRouter
 
-from app.api.ops.endpoints import auth, health
+from app.api.ops.endpoints import auth, health, users
 
 ops_router = APIRouter()
 ops_router.include_router(health.router)
 ops_router.include_router(auth.router)
+ops_router.include_router(users.router)
