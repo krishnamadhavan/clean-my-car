@@ -1,67 +1,53 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>User detail</h1>
-        <p class="mono muted">{{ id }}</p>
+        <a-typography-title :level="3" style="margin: 0">User detail</a-typography-title>
+        <a-typography-text type="secondary" code>{{ id }}</a-typography-text>
       </div>
-      <NuxtLink class="btn btn-secondary" to="/users">Back</NuxtLink>
-    </div>
+      <a-button @click="navigateTo('/users')">Back</a-button>
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-else-if="loading || !user" class="muted">Loading…</div>
-    <div v-else class="stack">
-      <div class="card">
-        <dl class="dl">
-          <dt>Phone</dt>
-          <dd class="mono">{{ user.phone }}</dd>
-          <dt>Name</dt>
-          <dd>{{ user.name || '—' }}</dd>
-          <dt>Email</dt>
-          <dd>{{ user.email || '—' }}</dd>
-          <dt>Status</dt>
-          <dd>
-            <span :class="user.is_active ? 'badge badge-ok' : 'badge badge-off'">
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
+    <a-spin v-else-if="loading || !user" />
+    <template v-else>
+      <a-card style="margin-bottom: 1rem">
+        <a-descriptions :column="{ xs: 1, sm: 2 }" bordered size="small">
+          <a-descriptions-item label="Phone">
+            <code>{{ user.phone }}</code>
+          </a-descriptions-item>
+          <a-descriptions-item label="Name">{{ user.name || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Email">{{ user.email || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Status">
+            <a-tag :color="user.is_active ? 'success' : 'default'">
               {{ user.is_active ? 'active' : 'inactive' }}
-            </span>
-            <span v-if="user.deleted_at" class="badge badge-warn" style="margin-left: 0.35rem">
-              deleted
-            </span>
-          </dd>
-          <dt>City</dt>
-          <dd>{{ user.city?.name || '—' }}</dd>
-          <dt>Society</dt>
-          <dd>{{ user.society?.name || '—' }}</dd>
-          <dt>Vehicle</dt>
-          <dd>{{ user.has_vehicle ? 'Yes' : 'No' }}</dd>
-          <dt>Created</dt>
-          <dd>{{ formatDateTime(user.created_at) }}</dd>
-        </dl>
-      </div>
+            </a-tag>
+            <a-tag v-if="user.deleted_at" color="error">deleted</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="City">{{ user.city?.name || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Society">{{ user.society?.name || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Vehicle">{{ user.has_vehicle ? 'Yes' : 'No' }}</a-descriptions-item>
+          <a-descriptions-item label="Created">{{ formatDateTime(user.created_at) }}</a-descriptions-item>
+        </a-descriptions>
+      </a-card>
 
-      <div class="row">
-        <button
+      <a-space wrap>
+        <a-popconfirm
           v-if="user.is_active"
-          type="button"
-          class="btn btn-danger"
-          :disabled="acting"
-          @click="deactivate"
+          title="Deactivate this consumer account?"
+          ok-text="Deactivate"
+          ok-type="danger"
+          @confirm="deactivate"
         >
-          Deactivate
-        </button>
-        <button v-else type="button" class="btn" :disabled="acting" @click="reactivate">
-          Reactivate
-        </button>
-        <NuxtLink
-          v-if="user.has_vehicle"
-          class="btn btn-secondary"
-          :to="`/users/${id}/vehicle`"
-        >
+          <a-button danger :loading="acting">Deactivate</a-button>
+        </a-popconfirm>
+        <a-button v-else type="primary" :loading="acting" @click="reactivate">Reactivate</a-button>
+        <a-button v-if="user.has_vehicle" @click="navigateTo(`/users/${id}/vehicle`)">
           View vehicle
-        </NuxtLink>
-      </div>
-      <div v-if="actionMsg" class="alert alert-success">{{ actionMsg }}</div>
-    </div>
+        </a-button>
+      </a-space>
+      <a-alert v-if="actionMsg" type="success" show-icon :message="actionMsg" style="margin-top: 1rem" />
+    </template>
   </div>
 </template>
 
@@ -92,7 +78,6 @@ async function load() {
 }
 
 async function deactivate() {
-  if (!confirm('Deactivate this consumer account?')) return
   acting.value = true
   actionMsg.value = ''
   try {

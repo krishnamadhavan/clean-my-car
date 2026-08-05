@@ -1,67 +1,80 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>Quote preview</h1>
-        <p>Same engine as consumer (OPS-PRICE-05).</p>
+        <a-typography-title :level="3" style="margin: 0">Quote preview</a-typography-title>
+        <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+          Same engine as consumer (OPS-PRICE-05).
+        </a-typography-paragraph>
       </div>
-      <NuxtLink class="btn btn-secondary" to="/pricing">Pricing</NuxtLink>
-    </div>
+      <a-button @click="navigateTo('/pricing')">Pricing</a-button>
+    </a-space>
 
-    <form class="card stack" @submit.prevent="runQuote">
-      <div class="grid-2">
-        <div class="field">
-          <label for="city">City ID</label>
-          <input id="city" v-model="form.city_id" class="mono" required placeholder="UUID" />
-        </div>
-        <div class="field">
-          <label for="tier">Size tier</label>
-          <select id="tier" v-model="form.size_tier">
-            <option value="small">small</option>
-            <option value="medium">medium</option>
-            <option value="large">large</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="freq">Interior frequency</label>
-          <select id="freq" v-model.number="form.interior_frequency">
-            <option :value="0">0</option>
-            <option :value="1">1</option>
-            <option :value="2">2</option>
-            <option :value="4">4</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="start">Start date</label>
-          <input id="start" v-model="form.start_date" type="date" />
-        </div>
-      </div>
-      <button class="btn" type="submit" :disabled="loading">{{ loading ? '…' : 'Compute quote' }}</button>
-    </form>
+    <a-card style="margin-bottom: 1rem">
+      <a-form layout="vertical" @finish="runQuote">
+        <a-row :gutter="16">
+          <a-col :xs="24" :md="12">
+            <a-form-item label="City ID" :rules="[{ required: true }]">
+              <a-input v-model:value="form.city_id" placeholder="UUID" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item label="Size tier">
+              <a-select v-model:value="form.size_tier">
+                <a-select-option value="small">small</a-select-option>
+                <a-select-option value="medium">medium</a-select-option>
+                <a-select-option value="large">large</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item label="Interior frequency">
+              <a-select v-model:value="form.interior_frequency">
+                <a-select-option :value="0">0</a-select-option>
+                <a-select-option :value="1">1</a-select-option>
+                <a-select-option :value="2">2</a-select-option>
+                <a-select-option :value="4">4</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="8">
+            <a-form-item label="Start date">
+              <a-date-picker v-model:value="startDate" style="width: 100%" value-format="YYYY-MM-DD" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-button type="primary" html-type="submit" :loading="loading">Compute quote</a-button>
+      </a-form>
+    </a-card>
 
-    <div v-if="error" class="alert alert-error" style="margin-top: 1rem">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <div v-if="quote" class="card stack" style="margin-top: 1rem">
-      <h2 class="card-title">Result — {{ quote.city.name }}</h2>
-      <dl class="dl">
-        <dt>Full monthly</dt>
-        <dd><strong>{{ formatPaise(quote.full_monthly_total_paise) }}</strong></dd>
-        <dt>Due now</dt>
-        <dd>{{ formatPaise(quote.amount_due_now_paise) }}</dd>
-        <dt>Prorated</dt>
-        <dd>{{ quote.is_prorated ? 'yes' : 'no' }}</dd>
-        <dt>Billing month</dt>
-        <dd>{{ quote.billing_month }} → next {{ quote.next_billing_month }}</dd>
-        <dt>Period</dt>
-        <dd>{{ quote.remaining_days }} / {{ quote.days_in_month }} days from {{ quote.start_date }}</dd>
-        <dt>Plan</dt>
-        <dd>{{ quote.size_tier }} · interior {{ quote.interior_frequency }}×</dd>
-      </dl>
-    </div>
+    <a-card v-if="quote" :title="`Result — ${quote.city.name}`">
+      <a-descriptions :column="{ xs: 1, sm: 2 }" bordered size="small">
+        <a-descriptions-item label="Full monthly">
+          <strong>{{ formatPaise(quote.full_monthly_total_paise) }}</strong>
+        </a-descriptions-item>
+        <a-descriptions-item label="Due now">
+          {{ formatPaise(quote.amount_due_now_paise) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="Prorated">{{ quote.is_prorated ? 'yes' : 'no' }}</a-descriptions-item>
+        <a-descriptions-item label="Billing month">
+          {{ quote.billing_month }} → next {{ quote.next_billing_month }}
+        </a-descriptions-item>
+        <a-descriptions-item label="Period">
+          {{ quote.remaining_days }} / {{ quote.days_in_month }} days from {{ quote.start_date }}
+        </a-descriptions-item>
+        <a-descriptions-item label="Plan">
+          {{ quote.size_tier }} · interior {{ quote.interior_frequency }}×
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import type { QuoteOut, VehicleSizeTier } from '~/types/ops'
 import { formatPaise } from '~/utils/format'
 
@@ -69,18 +82,24 @@ const { opsFetch } = useOpsApi()
 const loading = ref(false)
 const error = ref('')
 const quote = ref<QuoteOut | null>(null)
+const startDate = ref<Dayjs | string>(dayjs())
 
 const form = reactive({
   city_id: '',
   size_tier: 'medium' as VehicleSizeTier,
   interior_frequency: 2,
-  start_date: new Date().toISOString().slice(0, 10),
 })
 
 async function runQuote() {
   loading.value = true
   error.value = ''
   quote.value = null
+  const start =
+    typeof startDate.value === 'string'
+      ? startDate.value
+      : startDate.value
+        ? dayjs(startDate.value).format('YYYY-MM-DD')
+        : null
   try {
     quote.value = await opsFetch<QuoteOut>('/pricing/quote', {
       method: 'POST',
@@ -88,7 +107,7 @@ async function runQuote() {
         city_id: form.city_id.trim(),
         size_tier: form.size_tier,
         interior_frequency: form.interior_frequency,
-        start_date: form.start_date || null,
+        start_date: start,
       },
     })
   } catch (e: unknown) {

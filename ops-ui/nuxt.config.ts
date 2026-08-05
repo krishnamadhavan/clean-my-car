@@ -3,7 +3,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  css: ['~/assets/css/main.css'],
+  // SPA: Ant Design Vue 4 CSS-in-JS injects reliably client-side.
+  // Ops is an internal portal; SSR is not required.
+  ssr: false,
+
+  css: ['ant-design-vue/dist/reset.css', '~/assets/css/main.css'],
 
   app: {
     head: {
@@ -19,21 +23,48 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-only (future): proxy secrets, etc.
-    // Public keys are exposed to the browser.
     public: {
-      /** Backend origin, e.g. http://localhost:8000 */
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000',
-      /** Ops API prefix under the backend */
       opsApiPrefix: process.env.NUXT_PUBLIC_OPS_API_PREFIX || '/api/v1/ops',
     },
   },
 
-  // SPA-friendly defaults for an authenticated internal tool; can enable SSR later.
-  ssr: true,
+  build: {
+    transpile: ['ant-design-vue', '@ant-design/icons-vue', /dayjs/],
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: [
+        'ant-design-vue',
+        '@ant-design/icons-vue',
+        'dayjs',
+        'dayjs/plugin/advancedFormat',
+        'dayjs/plugin/customParseFormat',
+        'dayjs/plugin/localeData',
+        'dayjs/plugin/weekday',
+        'dayjs/plugin/weekOfYear',
+        'dayjs/plugin/weekYear',
+        'dayjs/plugin/quarterOfYear',
+      ],
+      needsInterop: [
+        'dayjs',
+        'dayjs/plugin/advancedFormat',
+        'dayjs/plugin/customParseFormat',
+        'dayjs/plugin/localeData',
+        'dayjs/plugin/weekday',
+        'dayjs/plugin/weekOfYear',
+        'dayjs/plugin/weekYear',
+        'dayjs/plugin/quarterOfYear',
+      ],
+    },
+    resolve: {
+      dedupe: ['dayjs'],
+    },
+  },
 
   typescript: {
     strict: true,
-    typeCheck: false, // enable via `npm run typecheck` once vue-tsc is added
+    typeCheck: false,
   },
 })

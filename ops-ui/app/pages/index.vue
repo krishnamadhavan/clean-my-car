@@ -1,38 +1,57 @@
 <template>
   <div>
-    <div class="page-header">
-      <div>
-        <h1>Ops dashboard</h1>
-        <p>Master data and support tools for Modules 1–6.</p>
-      </div>
-    </div>
+    <a-typography-title :level="3" style="margin-top: 0">Ops dashboard</a-typography-title>
+    <a-typography-paragraph type="secondary">
+      Master data and support tools for Modules 1–6.
+    </a-typography-paragraph>
 
-    <div class="stat-grid" style="margin-bottom: 1.25rem">
-      <div class="stat">
-        <div class="label">Waitlist</div>
-        <div class="value">{{ waitlistTotal ?? '—' }}</div>
-      </div>
-      <div class="stat">
-        <div class="label">Pricing gaps</div>
-        <div class="value">{{ missingPricing ?? '—' }}</div>
-      </div>
-      <div class="stat">
-        <div class="label">Signed in</div>
-        <div class="value" style="font-size: 1rem; word-break: break-word">
-          {{ auth.operator.value?.email || '—' }}
-        </div>
-      </div>
-    </div>
+    <a-row :gutter="[16, 16]" style="margin-bottom: 1.25rem">
+      <a-col :xs="24" :sm="8">
+        <a-card size="small" :bordered="true">
+          <a-statistic title="Waitlist" :value="waitlistTotal ?? undefined" :loading="statsLoading">
+            <template v-if="waitlistTotal === null && !statsLoading" #formatter> — </template>
+          </a-statistic>
+        </a-card>
+      </a-col>
+      <a-col :xs="24" :sm="8">
+        <a-card size="small" :bordered="true">
+          <a-statistic title="Pricing gaps" :value="missingPricing ?? undefined" :loading="statsLoading">
+            <template v-if="missingPricing === null && !statsLoading" #formatter> — </template>
+          </a-statistic>
+        </a-card>
+      </a-col>
+      <a-col :xs="24" :sm="8">
+        <a-card size="small" :bordered="true">
+          <div style="color: rgba(0,0,0,0.45); font-size: 14px; margin-bottom: 4px">Signed in</div>
+          <div style="font-size: 16px; font-weight: 600; word-break: break-word; color: #4b49ac">
+            {{ auth.operator.value?.email || '—' }}
+          </div>
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <div v-if="loadError" class="alert alert-error" style="margin-bottom: 1rem">{{ loadError }}</div>
+    <a-alert v-if="loadError" type="error" show-icon :message="loadError" style="margin-bottom: 1rem" />
 
-    <section class="cards" aria-label="Modules">
-      <NuxtLink v-for="item in modules" :key="item.to" :to="item.to" class="card card-link">
-        <h2>{{ item.title }}</h2>
-        <p>{{ item.blurb }}</p>
-        <span class="badge badge-ok">{{ item.badge }}</span>
-      </NuxtLink>
-    </section>
+    <a-row :gutter="[16, 16]">
+      <a-col v-for="item in modules" :key="item.to" :xs="24" :sm="12" :lg="8">
+        <a-card
+          hoverable
+          :bordered="true"
+          style="height: 100%; cursor: pointer"
+          @click="navigateTo(item.to)"
+        >
+          <template #title>
+            <span style="color: #4b49ac">{{ item.title }}</span>
+          </template>
+          <template #extra>
+            <a-tag color="purple">{{ item.badge }}</a-tag>
+          </template>
+          <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+            {{ item.blurb }}
+          </a-typography-paragraph>
+        </a-card>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
@@ -45,6 +64,7 @@ const { opsFetch } = useOpsApi()
 const waitlistTotal = ref<number | null>(null)
 const missingPricing = ref<number | null>(null)
 const loadError = ref('')
+const statsLoading = ref(true)
 
 const modules = [
   { to: '/users', title: 'Users', blurb: 'Search consumer accounts, deactivate / reactivate.', badge: 'Module 2' },
@@ -56,6 +76,7 @@ const modules = [
 ]
 
 onMounted(async () => {
+  statsLoading.value = true
   try {
     const [summary, missing] = await Promise.all([
       opsFetch<WaitlistSummary>('/waitlist/summary'),
@@ -65,37 +86,8 @@ onMounted(async () => {
     missingPricing.value = missing.total
   } catch (e: unknown) {
     loadError.value = e instanceof Error ? e.message : 'Failed to load dashboard stats'
+  } finally {
+    statsLoading.value = false
   }
 })
 </script>
-
-<style scoped>
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: 0.85rem;
-}
-
-.card-link {
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-
-.card-link:hover {
-  border-color: var(--accent);
-  text-decoration: none;
-  transform: translateY(-1px);
-}
-
-.card-link h2 {
-  margin: 0 0 0.35rem;
-  font-size: 1rem;
-}
-
-.card-link p {
-  margin: 0 0 0.75rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-</style>

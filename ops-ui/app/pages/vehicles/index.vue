@@ -1,61 +1,61 @@
 <template>
   <div>
-    <div class="page-header">
-      <div>
-        <h1>Vehicle makes</h1>
-        <p>Catalog brands (OPS-VEH-01–03). Size tier lives on models.</p>
-      </div>
-    </div>
+    <a-typography-title :level="3" style="margin-top: 0">Vehicle makes</a-typography-title>
+    <a-typography-paragraph type="secondary">
+      Catalog brands (OPS-VEH-01–03). Size tier lives on models.
+    </a-typography-paragraph>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <form class="card stack" style="margin-bottom: 1.25rem" @submit.prevent="createMake">
-      <h2 class="card-title">Add make</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="name">Name</label>
-          <input id="name" v-model="form.name" required />
-        </div>
-        <div class="field">
-          <label for="order">Display order</label>
-          <input id="order" v-model.number="form.display_order" type="number" />
-        </div>
-      </div>
-      <label class="checkbox-row">
-        <input v-model="form.is_active" type="checkbox" />
-        Active
-      </label>
-      <button class="btn" type="submit" :disabled="saving">Create make</button>
-    </form>
+    <a-card title="Add make" style="margin-bottom: 1rem">
+      <a-form layout="vertical" @finish="createMake">
+        <a-row :gutter="16">
+          <a-col :xs="24" :md="12">
+            <a-form-item label="Name" :rules="[{ required: true }]">
+              <a-input v-model:value="form.name" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item label="Display order">
+              <a-input-number v-model:value="form.display_order" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item label="Active">
+              <a-switch v-model:checked="form.is_active" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-button type="primary" html-type="submit" :loading="saving">Create make</a-button>
+      </a-form>
+    </a-card>
 
-    <div class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Active</th>
-            <th>Order</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="m in makes" :key="m.id">
-            <td>{{ m.name }}</td>
-            <td>
-              <span :class="m.is_active ? 'badge badge-ok' : 'badge badge-off'">
-                {{ m.is_active ? 'yes' : 'no' }}
-              </span>
-            </td>
-            <td>{{ m.display_order }}</td>
-            <td class="actions">
-              <NuxtLink class="btn btn-secondary btn-sm" :to="`/vehicles/${m.id}`">Models</NuxtLink>
-              <button class="btn btn-secondary btn-sm" type="button" @click="toggle(m)">
-                {{ m.is_active ? 'Deactivate' : 'Activate' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="makes"
+        row-key="id"
+        :pagination="false"
+        :scroll="{ x: 560 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'active'">
+            <a-tag :color="record.is_active ? 'success' : 'default'">
+              {{ record.is_active ? 'yes' : 'no' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-space wrap>
+              <a-button type="link" size="small" @click="navigateTo(`/vehicles/${record.id}`)">
+                Models
+              </a-button>
+              <a-button size="small" @click="toggle(record)">
+                {{ record.is_active ? 'Deactivate' : 'Activate' }}
+              </a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
@@ -68,6 +68,13 @@ const makes = ref<VehicleMake[]>([])
 const error = ref('')
 const saving = ref(false)
 const form = reactive({ name: '', is_active: true, display_order: 0 })
+
+const columns = [
+  { title: 'Name', dataIndex: 'name', key: 'name' },
+  { title: 'Active', key: 'active', width: 100 },
+  { title: 'Order', dataIndex: 'display_order', key: 'order', width: 90 },
+  { title: '', key: 'actions' },
+]
 
 async function load() {
   error.value = ''

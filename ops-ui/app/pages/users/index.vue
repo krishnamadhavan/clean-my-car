@@ -1,81 +1,85 @@
 <template>
   <div>
-    <div class="page-header">
-      <div>
-        <h1>Users</h1>
-        <p>Search consumer accounts (OPS-PROF-01).</p>
-      </div>
-    </div>
+    <a-typography-title :level="3" style="margin-top: 0">Users</a-typography-title>
+    <a-typography-paragraph type="secondary">
+      Search consumer accounts (OPS-PROF-01).
+    </a-typography-paragraph>
 
-    <form class="toolbar" @submit.prevent="load(1)">
-      <div class="field">
-        <label for="q">Search</label>
-        <input id="q" v-model="q" type="search" placeholder="Phone, UUID, name, email" />
-      </div>
-      <button class="btn" type="submit" :disabled="loading">{{ loading ? '…' : 'Search' }}</button>
-    </form>
+    <a-space wrap style="margin-bottom: 1rem; width: 100%">
+      <a-input-search
+        v-model:value="q"
+        placeholder="Phone, UUID, name, email"
+        enter-button="Search"
+        style="min-width: min(100%, 20rem)"
+        :loading="loading"
+        @search="load(1)"
+      />
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <div v-else-if="!loading && items.length === 0" class="empty">No users found.</div>
-
-    <div v-else class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Phone</th>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in items" :key="u.id">
-            <td class="mono">{{ u.phone }}</td>
-            <td>{{ u.name || '—' }}</td>
-            <td>
-              <span :class="u.is_active ? 'badge badge-ok' : 'badge badge-off'">
-                {{ u.is_active ? 'active' : 'inactive' }}
-              </span>
-            </td>
-            <td>{{ formatDateTime(u.created_at) }}</td>
-            <td class="actions">
-              <NuxtLink class="btn btn-secondary btn-sm" :to="`/users/${u.id}`">Open</NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-if="total > pageSize" class="row" style="margin-top: 1rem">
-      <button class="btn btn-secondary btn-sm" :disabled="page <= 1 || loading" @click="load(page - 1)">
-        Prev
-      </button>
-      <span class="muted">Page {{ page }} · {{ total }} total</span>
-      <button
-        class="btn btn-secondary btn-sm"
-        :disabled="page * pageSize >= total || loading"
-        @click="load(page + 1)"
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="items"
+        :loading="loading"
+        row-key="id"
+        :pagination="pagination"
+        :scroll="{ x: 640 }"
+        @change="onTableChange"
       >
-        Next
-      </button>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'phone'">
+            <code>{{ record.phone }}</code>
+          </template>
+          <template v-else-if="column.key === 'status'">
+            <a-tag :color="record.is_active ? 'success' : 'default'">
+              {{ record.is_active ? 'active' : 'inactive' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'created'">
+            {{ formatDateTime(record.created_at) }}
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button type="link" size="small" @click="navigateTo(`/users/${record.id}`)">
+              Open
+            </a-button>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { TablePaginationConfig } from 'ant-design-vue'
 import type { OpsUserSummary, Paginated } from '~/types/ops'
 import { formatDateTime } from '~/utils/format'
 
 const { opsFetch } = useOpsApi()
 const q = ref('')
 const items = ref<OpsUserSummary[]>([])
+const loading = ref(false)
+const error = ref('')
 const page = ref(1)
 const pageSize = 20
 const total = ref(0)
-const loading = ref(false)
-const error = ref('')
+
+const columns = [
+  { title: 'Phone', key: 'phone', dataIndex: 'phone' },
+  { title: 'Name', dataIndex: 'name', key: 'name', customRender: ({ text }: { text: string | null }) => text || '—' },
+  { title: 'Status', key: 'status' },
+  { title: 'Created', key: 'created' },
+  { title: '', key: 'actions', width: 90 },
+]
+
+const pagination = computed(() => ({
+  current: page.value,
+  pageSize,
+  total: total.value,
+  showSizeChanger: false,
+  responsive: true,
+}))
 
 async function load(p = 1) {
   loading.value = true
@@ -92,6 +96,10 @@ async function load(p = 1) {
   } finally {
     loading.value = false
   }
+}
+
+function onTableChange(pag: TablePaginationConfig) {
+  load(pag.current || 1)
 }
 
 onMounted(() => load(1))

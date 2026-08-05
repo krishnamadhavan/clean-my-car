@@ -1,73 +1,71 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>{{ city?.name || 'City' }}</h1>
-        <p>Societies (OPS-LOC-04–07). Service weekdays: pick exactly 3.</p>
+        <a-typography-title :level="3" style="margin: 0">{{ city?.name || 'City' }}</a-typography-title>
+        <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+          Societies (OPS-LOC-04–07). Service weekdays: pick exactly 3.
+        </a-typography-paragraph>
       </div>
-      <NuxtLink class="btn btn-secondary" to="/cities">All cities</NuxtLink>
-    </div>
+      <a-button @click="navigateTo('/cities')">All cities</a-button>
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <form class="card stack" style="margin-bottom: 1.25rem" @submit.prevent="createSociety">
-      <h2 class="card-title">Add society</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="sname">Name</label>
-          <input id="sname" v-model="form.name" required />
-        </div>
-        <div class="field">
-          <label for="addr">Address</label>
-          <input id="addr" v-model="form.address_line" />
-        </div>
-      </div>
-      <div class="field">
-        <label>Service weekdays (exactly 3)</label>
-        <div class="checkbox-row">
-          <label v-for="(label, idx) in WEEKDAY_LABELS" :key="idx">
-            <input v-model="form.service_weekdays" type="checkbox" :value="idx" />
-            {{ label }}
-          </label>
-        </div>
-      </div>
-      <label class="checkbox-row">
-        <input v-model="form.is_serviceable" type="checkbox" />
-        Serviceable (live)
-      </label>
-      <button class="btn" type="submit" :disabled="saving">Create society</button>
-    </form>
+    <a-card title="Add society" style="margin-bottom: 1rem">
+      <a-form layout="vertical" @finish="createSociety">
+        <a-row :gutter="16">
+          <a-col :xs="24" :md="12">
+            <a-form-item label="Name" :rules="[{ required: true }]">
+              <a-input v-model:value="form.name" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="12">
+            <a-form-item label="Address">
+              <a-input v-model:value="form.address_line" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="Service weekdays (exactly 3)">
+          <a-checkbox-group v-model:value="form.service_weekdays" :options="weekdayOptions" />
+        </a-form-item>
+        <a-form-item label="Serviceable (live)">
+          <a-switch v-model:checked="form.is_serviceable" />
+        </a-form-item>
+        <a-button type="primary" html-type="submit" :loading="saving">Create society</a-button>
+      </a-form>
+    </a-card>
 
-    <div class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Weekdays</th>
-            <th>Live</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in societies" :key="s.id">
-            <td>
-              <strong>{{ s.name }}</strong>
-              <div v-if="s.address_line" class="muted" style="font-size: 0.85rem">{{ s.address_line }}</div>
-            </td>
-            <td>{{ formatWeekdays(s.service_weekdays) }}</td>
-            <td>
-              <span :class="s.is_serviceable ? 'badge badge-ok' : 'badge badge-off'">
-                {{ s.is_serviceable ? 'yes' : 'no' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button class="btn btn-secondary btn-sm" type="button" @click="toggleLive(s)">
-                {{ s.is_serviceable ? 'Take offline' : 'Go live' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="societies"
+        row-key="id"
+        :pagination="false"
+        :scroll="{ x: 640 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'">
+            <strong>{{ record.name }}</strong>
+            <div v-if="record.address_line" style="color: rgba(0,0,0,0.45); font-size: 0.85rem">
+              {{ record.address_line }}
+            </div>
+          </template>
+          <template v-else-if="column.key === 'weekdays'">
+            {{ formatWeekdays(record.service_weekdays) }}
+          </template>
+          <template v-else-if="column.key === 'live'">
+            <a-tag :color="record.is_serviceable ? 'success' : 'default'">
+              {{ record.is_serviceable ? 'yes' : 'no' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button size="small" @click="toggleLive(record)">
+              {{ record.is_serviceable ? 'Take offline' : 'Go live' }}
+            </a-button>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
@@ -90,6 +88,15 @@ const form = reactive({
   service_weekdays: [0, 2, 4] as number[],
   is_serviceable: false,
 })
+
+const weekdayOptions = WEEKDAY_LABELS.map((label, value) => ({ label, value }))
+
+const columns = [
+  { title: 'Name', key: 'name' },
+  { title: 'Weekdays', key: 'weekdays' },
+  { title: 'Live', key: 'live', width: 90 },
+  { title: '', key: 'actions', width: 130 },
+]
 
 async function load() {
   error.value = ''

@@ -1,15 +1,15 @@
 <template>
   <div class="auth-shell">
-    <div class="panel">
-      <div class="brand">
-        <span class="mark" aria-hidden="true" />
+    <a-card class="auth-card" :bordered="true">
+      <div class="auth-brand">
+        <span class="ops-brand-mark" aria-hidden="true" />
         <div>
           <strong>Clean My Car</strong>
-          <span class="badge">Ops</span>
+          <a-tag color="purple" style="margin-left: 0.5rem">Ops</a-tag>
         </div>
       </div>
       <slot />
-    </div>
+    </a-card>
   </div>
 </template>
 
@@ -20,44 +20,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-page-y) var(--space-page-x);
+  padding: clamp(1rem, 4vw, 2rem);
   background:
-    radial-gradient(ellipse at top, rgba(59, 130, 246, 0.12), transparent 55%),
-    var(--bg);
+    radial-gradient(ellipse at top, rgba(152, 189, 255, 0.45), transparent 55%),
+    linear-gradient(160deg, #eef0ff 0%, #f5f7fb 45%, #fff5f6 100%);
 }
 
-.panel {
+.auth-card {
   width: 100%;
   max-width: 24rem;
-  padding: clamp(1.25rem, 4vw, 1.75rem);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  box-shadow: 0 8px 28px rgba(75, 73, 172, 0.12);
 }
 
-.brand {
+.auth-brand {
   display: flex;
   align-items: center;
   gap: 0.65rem;
   margin-bottom: 1.25rem;
-}
-
-.mark {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.45rem;
-  background: linear-gradient(135deg, var(--accent), #22d3ee);
-}
-
-.badge {
-  margin-left: 0.4rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: #4b49ac;
 }
 </style>

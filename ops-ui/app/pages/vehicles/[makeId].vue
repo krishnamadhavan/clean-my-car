@@ -1,68 +1,71 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>Models</h1>
-        <p>Models for make <span class="mono">{{ makeId }}</span> (OPS-VEH-04–06).</p>
+        <a-typography-title :level="3" style="margin: 0">Models</a-typography-title>
+        <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+          Models for make <code>{{ makeId }}</code> (OPS-VEH-04–06).
+        </a-typography-paragraph>
       </div>
-      <NuxtLink class="btn btn-secondary" to="/vehicles">All makes</NuxtLink>
-    </div>
+      <a-button @click="navigateTo('/vehicles')">All makes</a-button>
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <form class="card stack" style="margin-bottom: 1.25rem" @submit.prevent="createModel">
-      <h2 class="card-title">Add model</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="name">Name</label>
-          <input id="name" v-model="form.name" required />
-        </div>
-        <div class="field">
-          <label for="tier">Size tier</label>
-          <select id="tier" v-model="form.size_tier" required>
-            <option value="small">small</option>
-            <option value="medium">medium</option>
-            <option value="large">large</option>
-          </select>
-        </div>
-      </div>
-      <label class="checkbox-row">
-        <input v-model="form.is_active" type="checkbox" />
-        Active
-      </label>
-      <button class="btn" type="submit" :disabled="saving">Create model</button>
-    </form>
+    <a-card title="Add model" style="margin-bottom: 1rem">
+      <a-form layout="vertical" @finish="createModel">
+        <a-row :gutter="16">
+          <a-col :xs="24" :md="10">
+            <a-form-item label="Name" :rules="[{ required: true }]">
+              <a-input v-model:value="form.name" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="8">
+            <a-form-item label="Size tier">
+              <a-select v-model:value="form.size_tier">
+                <a-select-option value="small">small</a-select-option>
+                <a-select-option value="medium">medium</a-select-option>
+                <a-select-option value="large">large</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item label="Active">
+              <a-switch v-model:checked="form.is_active" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-button type="primary" html-type="submit" :loading="saving">Create model</a-button>
+      </a-form>
+    </a-card>
 
-    <div class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Active</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="m in models" :key="m.id">
-            <td>{{ m.name }}</td>
-            <td><span class="badge">{{ m.size_tier }}</span></td>
-            <td>
-              <span :class="m.is_active ? 'badge badge-ok' : 'badge badge-off'">
-                {{ m.is_active ? 'yes' : 'no' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button class="btn btn-secondary btn-sm" type="button" @click="cycleTier(m)">
-                Cycle size
-              </button>
-              <button class="btn btn-secondary btn-sm" type="button" @click="toggle(m)">
-                {{ m.is_active ? 'Deactivate' : 'Activate' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="models"
+        row-key="id"
+        :pagination="false"
+        :scroll="{ x: 560 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'tier'">
+            <a-tag color="purple">{{ record.size_tier }}</a-tag>
+          </template>
+          <template v-else-if="column.key === 'active'">
+            <a-tag :color="record.is_active ? 'success' : 'default'">
+              {{ record.is_active ? 'yes' : 'no' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-space wrap>
+              <a-button size="small" @click="cycleTier(record)">Cycle size</a-button>
+              <a-button size="small" @click="toggle(record)">
+                {{ record.is_active ? 'Deactivate' : 'Activate' }}
+              </a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
@@ -85,6 +88,13 @@ const form = reactive({
 })
 
 const tiers: VehicleSizeTier[] = ['small', 'medium', 'large']
+
+const columns = [
+  { title: 'Name', dataIndex: 'name', key: 'name' },
+  { title: 'Size', key: 'tier', width: 110 },
+  { title: 'Active', key: 'active', width: 100 },
+  { title: '', key: 'actions' },
+]
 
 async function load() {
   error.value = ''
