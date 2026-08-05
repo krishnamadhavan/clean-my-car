@@ -17,6 +17,12 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Internal ops portal for Clean My Car' },
         { name: 'robots', content: 'noindex, nofollow' },
+        { name: 'theme-color', content: '#4B49AC' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/logo-mark.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'apple-touch-icon', href: '/logo.png' },
       ],
       htmlAttrs: { lang: 'en' },
     },

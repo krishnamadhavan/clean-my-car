@@ -78,6 +78,7 @@ ops-ui/
 - Brand theme tokens in `app/utils/theme.ts`:
   - Primary: `#4B49AC`, soft `#98BDFF`
   - Secondary: `#7DA0FA`, `#7978E9`, accent `#F3797E`
+- Logo: `public/logo.svg` / `logo-mark.svg` (palette-matched); used via `AppLogo` in shell + login; browser icons via head `link` tags
 
 ## Design rules
 

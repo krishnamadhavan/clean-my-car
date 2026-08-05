@@ -14,7 +14,7 @@
       @breakpoint="onBreakpoint"
     >
       <div class="ops-sider-logo">
-        <span class="ops-brand-mark" aria-hidden="true" />
+        <AppLogo :size="collapsed && !isMobile ? 'sm' : 'md'" />
         <template v-if="!collapsed">
           <span class="ops-sider-title">Clean My Car</span>
           <span class="ops">Ops</span>

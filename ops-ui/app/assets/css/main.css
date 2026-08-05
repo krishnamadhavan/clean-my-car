@@ -31,15 +31,6 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.ops-brand-mark {
-  display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 0.4rem;
-  background: linear-gradient(135deg, #98bdff, #7da0fa);
-  flex-shrink: 0;
-}
-
 /* Responsive filter forms: stack on narrow screens */
 @media (max-width: 767px) {
   .ops-filter-form.ant-form-inline .ant-form-item {

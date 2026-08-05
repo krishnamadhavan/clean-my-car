@@ -2,7 +2,7 @@
   <div class="auth-shell">
     <a-card class="auth-card" :bordered="true">
       <div class="auth-brand">
-        <span class="ops-brand-mark" aria-hidden="true" />
+        <AppLogo size="lg" />
         <div>
           <strong>Clean My Car</strong>
           <a-tag color="purple" style="margin-left: 0.5rem">Ops</a-tag>

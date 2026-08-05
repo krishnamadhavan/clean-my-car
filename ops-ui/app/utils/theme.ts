@@ -5,6 +5,8 @@ import type { ThemeConfig } from 'ant-design-vue/es/config-provider/context'
  *
  * Primary:  #4B49AC (main), #98BDFF (soft / highlights)
  * Secondary: #7DA0FA, #7978E9, #F3797E
+ *
+ * Logo assets (public/): logo.svg, logo-mark.svg, logo.png — same palette.
  */
 export const brandColors = {
   primary: '#4B49AC',
