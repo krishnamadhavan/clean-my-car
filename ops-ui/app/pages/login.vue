@@ -1,38 +1,41 @@
 <template>
   <div>
-    <h1>Operator login</h1>
-    <p class="muted">Sign in with your ops email and password (not consumer phone OTP).</p>
+    <a-typography-title :level="3" style="margin-top: 0">Operator login</a-typography-title>
+    <a-typography-paragraph type="secondary">
+      Sign in with your ops email and password (not consumer phone OTP).
+    </a-typography-paragraph>
 
-    <form class="stack" @submit.prevent="onSubmit">
-      <div class="field">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
+    <a-form layout="vertical" :model="form" @finish="onSubmit">
+      <a-form-item
+        label="Email"
+        name="email"
+        :rules="[{ required: true, type: 'email', message: 'Enter a valid email' }]"
+      >
+        <a-input
+          v-model:value="form.email"
+          size="large"
           autocomplete="username"
-          required
           placeholder="admin@example.com"
         />
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
+      </a-form-item>
+      <a-form-item
+        label="Password"
+        name="password"
+        :rules="[{ required: true, min: 8, message: 'Min 8 characters' }]"
+      >
+        <a-input-password
+          v-model:value="form.password"
+          size="large"
           autocomplete="current-password"
-          required
-          minlength="8"
         />
-      </div>
+      </a-form-item>
 
-      <div v-if="error" class="alert alert-error" role="alert">{{ error }}</div>
+      <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-      <button class="btn" type="submit" :disabled="loading">
-        {{ loading ? 'Signing in…' : 'Sign in' }}
-      </button>
-    </form>
+      <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+        Sign in
+      </a-button>
+    </a-form>
   </div>
 </template>
 
@@ -42,8 +45,7 @@ definePageMeta({ layout: 'auth' })
 const { login } = useOpsApi()
 const route = useRoute()
 
-const email = ref('')
-const password = ref('')
+const form = reactive({ email: '', password: '' })
 const loading = ref(false)
 const error = ref('')
 
@@ -51,7 +53,7 @@ async function onSubmit() {
   loading.value = true
   error.value = ''
   try {
-    await login(email.value.trim(), password.value)
+    await login(form.email.trim(), form.password)
     const next = typeof route.query.next === 'string' ? route.query.next : '/'
     await navigateTo(next.startsWith('/') ? next : '/')
   } catch (e: unknown) {

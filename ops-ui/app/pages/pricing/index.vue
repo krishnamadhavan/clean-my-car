@@ -1,50 +1,49 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>Pricing</h1>
-        <p>City tariffs (OPS-PRICE-01–04, 06). Amounts stored in paise.</p>
+        <a-typography-title :level="3" style="margin: 0">Pricing</a-typography-title>
+        <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+          City tariffs (OPS-PRICE-01–04, 06). Amounts stored in paise.
+        </a-typography-paragraph>
       </div>
-      <NuxtLink class="btn btn-secondary" to="/pricing/quote">Quote preview</NuxtLink>
-    </div>
+      <a-button type="primary" ghost @click="navigateTo('/pricing/quote')">Quote preview</a-button>
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <section v-if="missing.length" class="card" style="margin-bottom: 1.25rem">
-      <h2 class="card-title">Missing active pricing ({{ missing.length }})</h2>
-      <ul class="muted" style="margin: 0; padding-left: 1.2rem">
-        <li v-for="row in missing" :key="row.city.id" style="margin-bottom: 0.35rem">
-          <NuxtLink :to="`/pricing/${row.city.id}`">{{ row.city.name }}</NuxtLink>
-          <span v-if="row.has_inactive_pricing"> · inactive config exists</span>
-        </li>
-      </ul>
-    </section>
+    <a-card v-if="missing.length" title="Missing active pricing" style="margin-bottom: 1rem">
+      <a-list size="small" :data-source="missing">
+        <template #renderItem="{ item }">
+          <a-list-item>
+            <a @click.prevent="navigateTo(`/pricing/${item.city.id}`)">{{ item.city.name }}</a>
+            <a-tag v-if="item.has_inactive_pricing" color="warning">inactive config exists</a-tag>
+          </a-list-item>
+        </template>
+      </a-list>
+    </a-card>
 
-    <div class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>City</th>
-            <th>State</th>
-            <th>Active city</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="c in cities" :key="c.id">
-            <td>{{ c.name }}</td>
-            <td>{{ c.state }}</td>
-            <td>
-              <span :class="c.is_active ? 'badge badge-ok' : 'badge badge-off'">
-                {{ c.is_active ? 'yes' : 'no' }}
-              </span>
-            </td>
-            <td class="actions">
-              <NuxtLink class="btn btn-secondary btn-sm" :to="`/pricing/${c.id}`">Edit pricing</NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="cities"
+        row-key="id"
+        :pagination="false"
+        :scroll="{ x: 560 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'active'">
+            <a-tag :color="record.is_active ? 'success' : 'default'">
+              {{ record.is_active ? 'yes' : 'no' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-button type="link" size="small" @click="navigateTo(`/pricing/${record.id}`)">
+              Edit pricing
+            </a-button>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
@@ -56,6 +55,13 @@ const { opsFetch } = useOpsApi()
 const cities = ref<City[]>([])
 const missing = ref<MissingPricing['items']>([])
 const error = ref('')
+
+const columns = [
+  { title: 'City', dataIndex: 'name', key: 'name' },
+  { title: 'State', dataIndex: 'state', key: 'state' },
+  { title: 'Active city', key: 'active', width: 120 },
+  { title: '', key: 'actions', width: 130 },
+]
 
 onMounted(async () => {
   try {

@@ -71,11 +71,20 @@ ops-ui/
 └── .env.example
 ```
 
+## UI stack
+
+- **Ant Design Vue 4** for all interactive components (layout, forms, tables, feedback).
+- **SPA mode** (`ssr: false`) so Ant Design CSS-in-JS styles inject correctly in the browser.
+- Brand theme tokens in `app/utils/theme.ts`:
+  - Primary: `#4B49AC`, soft `#98BDFF`
+  - Secondary: `#7DA0FA`, `#7978E9`, accent `#F3797E`
+- Logo: `public/logo.svg` / `logo-mark.svg` (palette-matched); used via `AppLogo` in shell + login; browser icons via head `link` tags
+
 ## Design rules
 
-- **Responsive by default** (mobile-first). Layouts must work from ~320px up without horizontal scroll.
-- Prefer fluid grids (`minmax`, `auto-fill`), `flex-wrap`, and `clamp()` over fixed widths.
-- Wide tables/code: wrap in `.scroll-x` or stack columns on small viewports.
+- **Responsive by default** (mobile-first). Use Ant `Grid` / `Row` / `Col` breakpoints and table `scroll.x`.
+- Prefer Ant layout patterns over custom CSS.
+- Wide tables: wrap with `.ops-table-scroll` when needed.
 
 ## Implemented screens (Modules 1–6)
 

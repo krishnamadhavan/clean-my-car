@@ -1,69 +1,67 @@
 <template>
   <div>
-    <div class="page-header">
-      <div>
-        <h1>Cities</h1>
-        <p>Location master data (OPS-LOC-01–03).</p>
-      </div>
-    </div>
+    <a-typography-title :level="3" style="margin-top: 0">Cities</a-typography-title>
+    <a-typography-paragraph type="secondary">
+      Location master data (OPS-LOC-01–03).
+    </a-typography-paragraph>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
-    <form class="card stack" style="margin-bottom: 1.25rem" @submit.prevent="createCity">
-      <h2 class="card-title">Add city</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="name">Name</label>
-          <input id="name" v-model="form.name" required />
-        </div>
-        <div class="field">
-          <label for="state">State</label>
-          <input id="state" v-model="form.state" required />
-        </div>
-        <div class="field">
-          <label for="order">Display order</label>
-          <input id="order" v-model.number="form.display_order" type="number" />
-        </div>
-        <div class="field">
-          <label class="checkbox-row" style="margin-top: 1.5rem">
-            <input v-model="form.is_active" type="checkbox" />
-            Active
-          </label>
-        </div>
-      </div>
-      <button class="btn" type="submit" :disabled="saving">{{ saving ? '…' : 'Create city' }}</button>
-    </form>
+    <a-card title="Add city" style="margin-bottom: 1rem">
+      <a-form layout="vertical" @finish="createCity">
+        <a-row :gutter="16">
+          <a-col :xs="24" :md="8">
+            <a-form-item label="Name" name="name" :rules="[{ required: true }]">
+              <a-input v-model:value="form.name" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="8">
+            <a-form-item label="State" name="state" :rules="[{ required: true }]">
+              <a-input v-model:value="form.state" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="4">
+            <a-form-item label="Display order">
+              <a-input-number v-model:value="form.display_order" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="4">
+            <a-form-item label="Active">
+              <a-switch v-model:checked="form.is_active" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-button type="primary" html-type="submit" :loading="saving">Create city</a-button>
+      </a-form>
+    </a-card>
 
-    <div class="scroll-x card" style="padding: 0">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>State</th>
-            <th>Active</th>
-            <th>Order</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="c in cities" :key="c.id">
-            <td>{{ c.name }}</td>
-            <td>{{ c.state }}</td>
-            <td>
-              <span :class="c.is_active ? 'badge badge-ok' : 'badge badge-off'">
-                {{ c.is_active ? 'yes' : 'no' }}
-              </span>
-            </td>
-            <td>{{ c.display_order }}</td>
-            <td class="actions">
-              <NuxtLink class="btn btn-secondary btn-sm" :to="`/cities/${c.id}`">Societies</NuxtLink>
-              <button class="btn btn-secondary btn-sm" type="button" @click="toggleActive(c)">
-                {{ c.is_active ? 'Deactivate' : 'Activate' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="ops-table-scroll">
+      <a-table
+        :columns="columns"
+        :data-source="cities"
+        :loading="loading"
+        row-key="id"
+        :pagination="false"
+        :scroll="{ x: 640 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'active'">
+            <a-tag :color="record.is_active ? 'success' : 'default'">
+              {{ record.is_active ? 'yes' : 'no' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'actions'">
+            <a-space wrap>
+              <a-button type="link" size="small" @click="navigateTo(`/cities/${record.id}`)">
+                Societies
+              </a-button>
+              <a-button size="small" @click="toggleActive(record)">
+                {{ record.is_active ? 'Deactivate' : 'Activate' }}
+              </a-button>
+            </a-space>
+          </template>
+        </template>
+      </a-table>
     </div>
   </div>
 </template>
@@ -75,9 +73,19 @@ const { opsFetch } = useOpsApi()
 const cities = ref<City[]>([])
 const error = ref('')
 const saving = ref(false)
+const loading = ref(false)
 const form = reactive({ name: '', state: '', is_active: true, display_order: 0 })
 
+const columns = [
+  { title: 'Name', dataIndex: 'name', key: 'name' },
+  { title: 'State', dataIndex: 'state', key: 'state' },
+  { title: 'Active', key: 'active' },
+  { title: 'Order', dataIndex: 'display_order', key: 'order', width: 90 },
+  { title: '', key: 'actions' },
+]
+
 async function load() {
+  loading.value = true
   error.value = ''
   try {
     const data = await opsFetch<Paginated<City>>('/cities', {
@@ -86,6 +94,8 @@ async function load() {
     cities.value = data.items
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load cities'
+  } finally {
+    loading.value = false
   }
 }
 

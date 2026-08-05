@@ -1,68 +1,75 @@
 <template>
   <div>
-    <div class="page-header">
+    <a-space wrap style="margin-bottom: 1rem; width: 100%; justify-content: space-between">
       <div>
-        <h1>User vehicle</h1>
-        <p>Inspect / correct registration (OPS-VEH-07/08).</p>
+        <a-typography-title :level="3" style="margin: 0">User vehicle</a-typography-title>
+        <a-typography-paragraph type="secondary" style="margin-bottom: 0">
+          Inspect / correct registration (OPS-VEH-07/08).
+        </a-typography-paragraph>
       </div>
-      <NuxtLink class="btn btn-secondary" :to="`/users/${userId}`">Back to user</NuxtLink>
-    </div>
+      <a-button @click="navigateTo(`/users/${userId}`)">Back to user</a-button>
+    </a-space>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-else-if="loading" class="muted">Loading…</div>
-    <div v-else-if="vehicle" class="stack">
-      <div class="card">
-        <dl class="dl">
-          <dt>Make</dt>
-          <dd>{{ vehicle.make?.name || '—' }}</dd>
-          <dt>Model</dt>
-          <dd>{{ vehicle.model?.name || '—' }}</dd>
-          <dt>Size tier</dt>
-          <dd><span class="badge">{{ vehicle.size_tier }}</span></dd>
-          <dt>Plate</dt>
-          <dd class="mono">{{ vehicle.plate_number || '—' }}</dd>
-          <dt>Nickname</dt>
-          <dd>{{ vehicle.nickname || '—' }}</dd>
-          <dt>Colour</dt>
-          <dd>{{ vehicle.colour || '—' }}</dd>
-          <dt>Parking</dt>
-          <dd>{{ [vehicle.parking_tower, vehicle.parking_slot].filter(Boolean).join(' · ') || '—' }}</dd>
-        </dl>
-      </div>
+    <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
+    <a-spin v-else-if="loading" />
+    <template v-else-if="vehicle">
+      <a-card style="margin-bottom: 1rem" title="Current vehicle">
+        <a-descriptions :column="{ xs: 1, sm: 2 }" bordered size="small">
+          <a-descriptions-item label="Make">{{ vehicle.make?.name || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Model">{{ vehicle.model?.name || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Size tier">
+            <a-tag color="purple">{{ vehicle.size_tier }}</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="Plate">
+            <code>{{ vehicle.plate_number || '—' }}</code>
+          </a-descriptions-item>
+          <a-descriptions-item label="Nickname">{{ vehicle.nickname || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Colour">{{ vehicle.colour || '—' }}</a-descriptions-item>
+          <a-descriptions-item label="Parking">
+            {{ [vehicle.parking_tower, vehicle.parking_slot].filter(Boolean).join(' · ') || '—' }}
+          </a-descriptions-item>
+        </a-descriptions>
+      </a-card>
 
-      <form class="card stack" @submit.prevent="save">
-        <h2 class="card-title">Correct vehicle</h2>
-        <div class="grid-2">
-          <div class="field">
-            <label for="model">Model ID</label>
-            <input id="model" v-model="form.model_id" class="mono" placeholder="UUID of catalog model" />
-            <span class="field-hint">Leave blank to keep current model. Size re-derives on change.</span>
-          </div>
-          <div class="field">
-            <label for="plate">Plate</label>
-            <input id="plate" v-model="form.plate_number" placeholder="KA01AB1234 or 26BH1234AB" />
-          </div>
-          <div class="field">
-            <label for="nick">Nickname</label>
-            <input id="nick" v-model="form.nickname" />
-          </div>
-          <div class="field">
-            <label for="colour">Colour</label>
-            <input id="colour" v-model="form.colour" />
-          </div>
-          <div class="field">
-            <label for="tower">Parking tower</label>
-            <input id="tower" v-model="form.parking_tower" />
-          </div>
-          <div class="field">
-            <label for="slot">Parking slot</label>
-            <input id="slot" v-model="form.parking_slot" />
-          </div>
-        </div>
-        <div v-if="saveMsg" class="alert alert-success">{{ saveMsg }}</div>
-        <button class="btn" type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save corrections' }}</button>
-      </form>
-    </div>
+      <a-card title="Correct vehicle">
+        <a-form layout="vertical" @finish="save">
+          <a-row :gutter="16">
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Model ID" extra="Leave blank to keep current. Size re-derives on change.">
+                <a-input v-model:value="form.model_id" placeholder="UUID of catalog model" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Plate">
+                <a-input v-model:value="form.plate_number" placeholder="KA01AB1234 or 26BH1234AB" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Nickname">
+                <a-input v-model:value="form.nickname" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Colour">
+                <a-input v-model:value="form.colour" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Parking tower">
+                <a-input v-model:value="form.parking_tower" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="12">
+              <a-form-item label="Parking slot">
+                <a-input v-model:value="form.parking_slot" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-alert v-if="saveMsg" type="success" show-icon :message="saveMsg" style="margin-bottom: 1rem" />
+          <a-button type="primary" html-type="submit" :loading="saving">Save corrections</a-button>
+        </a-form>
+      </a-card>
+    </template>
   </div>
 </template>
 

@@ -1,62 +1,145 @@
 <template>
-  <div class="shell">
-    <header class="topbar">
-      <div class="brand">
-        <NuxtLink to="/" class="brand-link">
-          <span class="mark" aria-hidden="true" />
-          <div>
-            <strong>Clean My Car</strong>
-            <span class="badge">Ops</span>
-          </div>
-        </NuxtLink>
+  <a-layout class="ops-layout" has-sider>
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      collapsible
+      :trigger="null"
+      :width="220"
+      :collapsed-width="isMobile ? 0 : 64"
+      theme="light"
+      class="ops-sider"
+      :class="{ 'ops-sider-mobile': isMobile }"
+      breakpoint="lg"
+      :style="isMobile ? { position: 'fixed', height: '100vh', left: 0, top: 0, bottom: 0 } : undefined"
+      @breakpoint="onBreakpoint"
+    >
+      <div class="ops-sider-logo">
+        <AppLogo :size="collapsed && !isMobile ? 'sm' : 'md'" />
+        <template v-if="!collapsed">
+          <span class="ops-sider-title">Clean My Car</span>
+          <span class="ops">Ops</span>
+        </template>
       </div>
+      <a-menu
+        v-model:selected-keys="selectedKeys"
+        mode="inline"
+        :items="menuItems"
+        @click="onMenuClick"
+      />
+    </a-layout-sider>
 
-      <button
-        type="button"
-        class="btn btn-secondary btn-sm nav-toggle"
-        aria-label="Toggle navigation"
-        :aria-expanded="navOpen"
-        @click="navOpen = !navOpen"
-      >
-        Menu
-      </button>
+    <!-- Mobile mask when drawer-style sider is open -->
+    <div
+      v-if="isMobile && !collapsed"
+      class="ops-sider-mask"
+      aria-hidden="true"
+      @click="collapsed = true"
+    />
 
-      <nav class="nav" :class="{ open: navOpen }" aria-label="Primary">
-        <NuxtLink to="/" @click="navOpen = false">Dashboard</NuxtLink>
-        <NuxtLink to="/users" @click="navOpen = false">Users</NuxtLink>
-        <NuxtLink to="/cities" @click="navOpen = false">Cities</NuxtLink>
-        <NuxtLink to="/waitlist" @click="navOpen = false">Waitlist</NuxtLink>
-        <NuxtLink to="/vehicles" @click="navOpen = false">Vehicles</NuxtLink>
-        <NuxtLink to="/pricing" @click="navOpen = false">Pricing</NuxtLink>
-      </nav>
+    <a-layout class="ops-main-layout">
+      <a-layout-header class="ops-header">
+        <div class="ops-header-left">
+          <a-button type="text" class="ops-trigger" aria-label="Toggle menu" @click="toggleCollapsed">
+            <template #icon>
+              <MenuUnfoldOutlined v-if="collapsed" />
+              <MenuFoldOutlined v-else />
+            </template>
+          </a-button>
+          <span class="ops-header-title">{{ pageTitle }}</span>
+        </div>
+        <div class="ops-header-right">
+          <span v-if="auth.operator.value" class="ops-user">
+            {{ auth.operator.value.name || auth.operator.value.email }}
+          </span>
+          <a-button ghost size="small" :loading="loggingOut" @click="onLogout">Log out</a-button>
+        </div>
+      </a-layout-header>
 
-      <div class="session">
-        <span v-if="auth.operator.value" class="who muted" :title="auth.operator.value.email">
-          {{ auth.operator.value.name || auth.operator.value.email }}
-        </span>
-        <button type="button" class="btn btn-secondary btn-sm" :disabled="loggingOut" @click="onLogout">
-          {{ loggingOut ? '…' : 'Log out' }}
-        </button>
-      </div>
-    </header>
-    <main class="main">
-      <slot />
-    </main>
-    <footer class="footer">
-      <span>Internal tools only · not the consumer app</span>
-      <span class="api mono">{{ apiBase }}{{ opsApiPrefix }}</span>
-    </footer>
-  </div>
+      <a-layout-content class="ops-content">
+        <div class="ops-page">
+          <slot />
+        </div>
+      </a-layout-content>
+
+      <a-layout-footer class="ops-footer">
+        <span>Internal tools only · not the consumer app</span>
+        <span class="ops-footer-api">{{ apiBase }}{{ opsApiPrefix }}</span>
+      </a-layout-footer>
+    </a-layout>
+  </a-layout>
 </template>
 
 <script setup lang="ts">
+import {
+  CarOutlined,
+  DashboardOutlined,
+  DollarOutlined,
+  EnvironmentOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  TeamOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons-vue'
+import type { ItemType } from 'ant-design-vue'
+
 const config = useRuntimeConfig()
 const auth = useAuth()
 const { logout } = useOpsApi()
+const route = useRoute()
+const router = useRouter()
+
 const apiBase = config.public.apiBase
 const opsApiPrefix = config.public.opsApiPrefix
-const navOpen = ref(false)
+
+const collapsed = ref(false)
+const isMobile = ref(false)
 const loggingOut = ref(false)
+
+const menuItems = computed<ItemType[]>(() => [
+  { key: '/', icon: () => h(DashboardOutlined), label: 'Dashboard' },
+  { key: '/users', icon: () => h(TeamOutlined), label: 'Users' },
+  { key: '/cities', icon: () => h(EnvironmentOutlined), label: 'Cities' },
+  { key: '/waitlist', icon: () => h(UnorderedListOutlined), label: 'Waitlist' },
+  { key: '/vehicles', icon: () => h(CarOutlined), label: 'Vehicles' },
+  { key: '/pricing', icon: () => h(DollarOutlined), label: 'Pricing' },
+])
+
+const selectedKeys = computed({
+  get: () => {
+    const path = route.path
+    if (path.startsWith('/users')) return ['/users']
+    if (path.startsWith('/cities')) return ['/cities']
+    if (path.startsWith('/waitlist')) return ['/waitlist']
+    if (path.startsWith('/vehicles')) return ['/vehicles']
+    if (path.startsWith('/pricing')) return ['/pricing']
+    return ['/']
+  },
+  set: () => {},
+})
+
+const pageTitle = computed(() => {
+  const path = route.path
+  if (path.startsWith('/users')) return 'Users'
+  if (path.startsWith('/cities')) return 'Cities & societies'
+  if (path.startsWith('/waitlist')) return 'Waitlist'
+  if (path.startsWith('/vehicles')) return 'Vehicle catalog'
+  if (path.startsWith('/pricing')) return 'Pricing'
+  return 'Dashboard'
+})
+
+function onBreakpoint(broken: boolean) {
+  isMobile.value = broken
+  collapsed.value = broken
+}
+
+function toggleCollapsed() {
+  collapsed.value = !collapsed.value
+}
+
+function onMenuClick(info: { key: string | number }) {
+  router.push(String(info.key))
+  if (isMobile.value) collapsed.value = true
+}
 
 async function onLogout() {
   loggingOut.value = true
@@ -67,95 +150,119 @@ async function onLogout() {
     loggingOut.value = false
   }
 }
+
+onMounted(() => {
+  // Align mobile state if first paint is already narrow
+  if (typeof window !== 'undefined' && window.innerWidth < 992) {
+    isMobile.value = true
+    collapsed.value = true
+  }
+})
 </script>
 
 <style scoped>
-.shell {
+.ops-layout {
   min-height: 100vh;
   min-height: 100dvh;
+}
+
+.ops-sider {
+  z-index: 100;
+  border-right: 1px solid #f0f0f0;
+  overflow: auto;
+}
+
+.ops-sider :deep(.ant-layout-sider-children) {
   display: flex;
   flex-direction: column;
 }
 
-.topbar {
+.ops-sider-logo {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem 1rem;
-  padding: 0.75rem var(--space-page-x);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: 0.5rem;
+  min-height: 56px;
+  padding: 0 1rem;
+  font-weight: 700;
+  color: #4b49ac;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.brand-link {
+.ops-sider-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ops-sider-logo .ops {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4b49ac;
+  background: #eef0ff;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.ops-sider-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.ops-main-layout {
+  min-width: 0;
+  flex: 1;
+}
+
+.ops-header {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  color: inherit;
-  text-decoration: none;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 12px 0 0;
+  background: #4b49ac !important;
+  height: 56px;
+  line-height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.ops-header-left,
+.ops-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
 }
 
-.brand-link:hover {
-  text-decoration: none;
-}
-
-.mark {
+.ops-header-right {
+  padding-right: 12px;
   flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.45rem;
-  background: linear-gradient(135deg, var(--accent), #22d3ee);
 }
 
-.badge {
-  margin-left: 0.4rem;
+.ops-trigger {
+  color: #fff !important;
+  font-size: 16px;
+  width: 48px;
+  height: 56px;
 }
 
-.nav-toggle {
-  margin-left: auto;
-}
-
-.nav {
-  display: none;
-  flex-basis: 100%;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-size: 0.92rem;
-}
-
-.nav.open {
-  display: flex;
-}
-
-.nav a {
-  color: var(--muted);
-  padding: 0.45rem 0.35rem;
-  border-radius: var(--radius-sm);
-}
-
-.nav a:hover {
-  color: var(--text);
-  background: var(--accent-soft);
-  text-decoration: none;
-}
-
-.nav a.router-link-active {
-  color: var(--text);
+.ops-header-title {
+  color: #fff;
   font-weight: 600;
-  background: var(--accent-soft);
+  font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.session {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  justify-content: space-between;
-}
-
-.who {
+.ops-user {
+  color: rgba(255, 255, 255, 0.92);
   font-size: 0.85rem;
   max-width: 12rem;
   overflow: hidden;
@@ -163,51 +270,37 @@ async function onLogout() {
   white-space: nowrap;
 }
 
-.main {
-  flex: 1;
-  width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: var(--space-page-y) var(--space-page-x) calc(var(--space-page-y) * 1.5);
+@media (max-width: 576px) {
+  .ops-user {
+    display: none;
+  }
 }
 
-.footer {
+.ops-content {
+  padding: clamp(12px, 3vw, 24px);
+  background: #f5f7fb;
+  min-height: calc(100vh - 56px - 64px);
+}
+
+.ops-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ops-footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  padding: 0.75rem var(--space-page-x);
-  border-top: 1px solid var(--border);
-  color: var(--muted);
+  padding: 12px clamp(12px, 3vw, 24px);
+  background: #f5f7fb;
+  color: rgba(0, 0, 0, 0.45);
   font-size: 0.8rem;
 }
 
-.api {
+.ops-footer-api {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   word-break: break-all;
-}
-
-@media (min-width: 900px) {
-  .nav-toggle {
-    display: none;
-  }
-
-  .nav {
-    display: flex;
-    flex-basis: auto;
-    flex-direction: row;
-    flex: 1;
-    align-items: center;
-    gap: 0.15rem 0.35rem;
-    flex-wrap: wrap;
-  }
-
-  .nav a {
-    padding: 0.35rem 0.55rem;
-  }
-
-  .session {
-    width: auto;
-    margin-left: auto;
-  }
 }
 </style>
