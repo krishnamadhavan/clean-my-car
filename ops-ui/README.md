@@ -40,6 +40,8 @@ make down
 
 The SPA calls the API from the **browser**, so `NUXT_PUBLIC_API_BASE` must be a host-reachable URL (default `http://localhost:8000`), not the Docker network hostname `api`.
 
+**Port coupling:** if you change `API_PORT` in the root `.env`, also set `NUXT_PUBLIC_API_BASE` to the same host port (e.g. `API_PORT=8080` → `NUXT_PUBLIC_API_BASE=http://localhost:8080`). Compose cannot derive that URL from `API_PORT` alone.
+
 Production image (CI / deploy):
 
 ```bash
@@ -65,7 +67,7 @@ cp .env.example .env
 
 | Env | Default | Purpose |
 |-----|---------|---------|
-| `NUXT_PUBLIC_API_BASE` | `http://localhost:8000` | FastAPI origin (browser) |
+| `NUXT_PUBLIC_API_BASE` | `http://localhost:8000` | FastAPI origin (browser); must match published `API_PORT` |
 | `NUXT_PUBLIC_OPS_API_PREFIX` | `/api/v1/ops` | Ops routes prefix |
 | `OPS_UI_PORT` | `3000` | Host port published by compose |
 
