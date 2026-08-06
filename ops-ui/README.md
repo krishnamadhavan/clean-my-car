@@ -40,7 +40,10 @@ make down
 
 The SPA calls the API from the **browser**, so `NUXT_PUBLIC_API_BASE` must be a host-reachable URL (default `http://localhost:8000`), not the Docker network hostname `api`.
 
-**Port coupling:** if you change `API_PORT` in the root `.env`, also set `NUXT_PUBLIC_API_BASE` to the same host port (e.g. `API_PORT=8080` → `NUXT_PUBLIC_API_BASE=http://localhost:8080`). Compose cannot derive that URL from `API_PORT` alone.
+**Port coupling:**
+
+- If you change `API_PORT` in the root `.env`, also set `NUXT_PUBLIC_API_BASE` to the same host port (e.g. `API_PORT=8080` → `NUXT_PUBLIC_API_BASE=http://localhost:8080`). Compose cannot derive that URL from `API_PORT` alone.
+- If you change `OPS_UI_PORT`, also update the API `CORS_ORIGINS` list to include the new origin (e.g. `OPS_UI_PORT=3001` → `CORS_ORIGINS=http://localhost:3001,http://127.0.0.1:3001`). Otherwise the SPA loads but browser API calls fail CORS.
 
 Production image (CI / deploy):
 
