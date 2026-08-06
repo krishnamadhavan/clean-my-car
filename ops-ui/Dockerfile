@@ -34,8 +34,11 @@ RUN npm ci --ignore-scripts
 # ---------------------------------------------------------------------------
 FROM base AS development
 
-ENV NODE_ENV=development
+ENV NODE_ENV=development \
+    OPS_UI_NODE_MODULES_SEED=/opt/ops-ui/node_modules
 
+# Seed path survives empty named-volume mounts over /app/node_modules.
+COPY --from=deps /app/node_modules /opt/ops-ui/node_modules
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate .nuxt types after sources exist (deps intentionally skipped prepare).
