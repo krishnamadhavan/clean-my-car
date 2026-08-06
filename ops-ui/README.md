@@ -20,23 +20,25 @@ Ops UI is a first-class compose service (`ops-ui`), same as `api` and `db`.
 
 ```bash
 # monorepo root
-make up                 # db + api + ops-ui
+make up                 # db + api + ops-ui (enables Compose profile ops-ui)
 # open http://localhost:3000
+make up-backend         # db + api only (skip Nuxt image)
 
 make logs-ops-ui        # follow Nuxt logs
 make ops-ui-shell       # shell in the container
-make ops-ui-dev         # start/rebuild only the ops-ui service
+make ops-ui-dev         # start ops-ui (also starts healthy api/db via depends_on)
 make down
 ```
 
 | Compose detail | Value |
 |----------------|--------|
 | Service name | `ops-ui` |
+| Profile | `ops-ui` (enabled by `make up` / `COMPOSE_PROFILES=ops-ui`) |
 | Container | `cmc-ops-ui` |
 | Image target | `development` (live reload) |
 | Host port | `OPS_UI_PORT` (default `3000`) |
 | Source mount | `./ops-ui` → `/app` |
-| `node_modules` | named volume `ops_ui_node_modules` (Linux modules from the image) |
+| `node_modules` | named volume `ops_ui_node_modules` (seeded from the image) |
 
 The SPA calls the API from the **browser**, so `NUXT_PUBLIC_API_BASE` must be a host-reachable URL (default `http://localhost:8000`), not the Docker network hostname `api`.
 

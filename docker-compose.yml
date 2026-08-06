@@ -1,5 +1,8 @@
-# Clean My Car monorepo — local development stack (db + api + ops-ui)
-# Usage: make up  (or: docker compose up --build)
+# Clean My Car monorepo — local development stack (db + api + optional ops-ui)
+# Usage:
+#   make up           # db + api + ops-ui  (COMPOSE_PROFILES=ops-ui)
+#   make up-backend   # db + api only
+#   docker compose --profile ops-ui up --build
 
 services:
   db:
@@ -61,6 +64,9 @@ services:
       start_period: 15s
 
   ops-ui:
+    # Opt-in via profile so backend-only work need not build Nuxt.
+    # make up enables this profile; make up-backend leaves it off.
+    profiles: ["ops-ui"]
     build:
       context: ./ops-ui
       dockerfile: Dockerfile

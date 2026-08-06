@@ -4,6 +4,8 @@
 .DEFAULT_GOAL := help
 
 COMPOSE        := docker compose
+# Full stack includes the ops-ui Compose profile (see docker-compose.yml).
+COMPOSE_FULL   := COMPOSE_PROFILES=ops-ui $(COMPOSE)
 API_SERVICE    := api
 DB_SERVICE     := db
 OPS_UI_SERVICE := ops-ui
@@ -37,41 +39,50 @@ env: ## Create .env from .env.example if missing
 # ---------------------------------------------------------------------------
 
 .PHONY: build
-build: env ## Build images
-	$(COMPOSE) build
+build: env ## Build images (including ops-ui profile)
+	$(COMPOSE_FULL) build
 
 .PHONY: up
 up: env ## Build and start API + Postgres + Ops UI (detached)
-	$(COMPOSE) up --build -d
+	$(COMPOSE_FULL) up --build -d
 	@echo ""
 	@echo "API:     http://localhost:$${API_PORT:-8000}"
 	@echo "Docs:    http://localhost:$${API_PORT:-8000}/docs"
 	@echo "Ops UI:  http://localhost:$${OPS_UI_PORT:-3000}"
 	@echo "Health:  http://localhost:$${API_PORT:-8000}/api/v1/health"
 
+.PHONY: up-backend
+up-backend: env ## Build and start API + Postgres only (no Ops UI)
+	$(COMPOSE) up --build -d $(DB_SERVICE) $(API_SERVICE)
+	@echo ""
+	@echo "API:     http://localhost:$${API_PORT:-8000}"
+	@echo "Docs:    http://localhost:$${API_PORT:-8000}/docs"
+	@echo "Health:  http://localhost:$${API_PORT:-8000}/api/v1/health"
+	@echo "(Ops UI skipped — use make up or make ops-ui-dev)"
+
 .PHONY: up-fg
-up-fg: env ## Start stack in foreground
-	$(COMPOSE) up --build
+up-fg: env ## Start full stack in foreground (includes Ops UI)
+	$(COMPOSE_FULL) up --build
 
 .PHONY: down
 down: ## Stop containers (keep volumes)
-	$(COMPOSE) down
+	$(COMPOSE_FULL) down
 
 .PHONY: destroy
 destroy: ## Stop containers and delete volumes (destructive)
-	$(COMPOSE) down -v
+	$(COMPOSE_FULL) down -v
 
 .PHONY: restart
 restart: ## Restart all services
-	$(COMPOSE) restart
+	$(COMPOSE_FULL) restart
 
 .PHONY: ps
 ps: ## Show container status
-	$(COMPOSE) ps
+	$(COMPOSE_FULL) ps
 
 .PHONY: logs
 logs: ## Follow logs (all services)
-	$(COMPOSE) logs -f
+	$(COMPOSE_FULL) logs -f
 
 .PHONY: logs-api
 logs-api: ## Follow API logs
@@ -233,8 +244,8 @@ ops-ui-install: ## Install ops-ui npm dependencies on the host (optional; not ne
 	cd $(OPS_UI_DIR) && npm install
 
 .PHONY: ops-ui-dev
-ops-ui-dev: env ## Start Ops UI container only (full stack: make up)
-	$(COMPOSE) up --build -d $(OPS_UI_SERVICE)
+ops-ui-dev: env ## Start Ops UI (pulls in healthy api/db via depends_on)
+	$(COMPOSE_FULL) up --build -d $(OPS_UI_SERVICE)
 	@echo "Ops UI: http://localhost:$${OPS_UI_PORT:-3000}"
 
 .PHONY: ops-ui-dev-host

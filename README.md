@@ -19,6 +19,7 @@ Monorepo for the **Clean My Car** apartment car-cleaning subscription product.
 ```bash
 cp .env.example .env   # or: make env
 make up                # API + Postgres + Ops UI
+make up-backend        # API + Postgres only (skip Ops UI)
 make health            # liveness
 make ready             # DB connectivity
 ```
@@ -40,7 +41,7 @@ make test          # backend tests
 make coverage      # tests + coverage (≥95% required; report in backend/htmlcov/)
 make format        # ruff fix + format
 make lint          # ruff check
-make ops-ui-dev    # Ops UI container only (or use make up for full stack)
+make ops-ui-dev    # Ops UI (+ api/db via depends_on)
 make ops-ui-dev-host  # optional: Nuxt on host Node (needs make ops-ui-install)
 make pre-commit-install   # once: run hooks before every git commit
 make pre-commit    # ruff + file checks on all files
@@ -50,11 +51,12 @@ make help          # all targets
 
 ### Ops UI
 
-Ops UI runs in Docker with the rest of the stack (`make up`). Source is bind-mounted for live reload.
+Ops UI is a Compose **profile** (`ops-ui`). `make up` enables it; `make up-backend` starts only `db` + `api`. Source is bind-mounted for live reload.
 
 ```bash
 make up                 # db + api + ops-ui
 # open http://localhost:3000
+make up-backend         # backend-only contributors
 make logs-ops-ui
 ```
 
