@@ -5,7 +5,7 @@ Monorepo for the **Clean My Car** apartment car-cleaning subscription product.
 | Path | Status | Description |
 |------|--------|-------------|
 | `backend/` | Active | FastAPI + PostgreSQL API |
-| `ops-ui/` | Scaffold | Nuxt ops portal (internal dashboard) |
+| `ops-ui/` | Active | Nuxt ops portal (internal dashboard, Docker) |
 | `ios/` | Planned | Native iOS client |
 | `docs/` | Active | PRD and product docs |
 
@@ -18,7 +18,7 @@ Monorepo for the **Clean My Car** apartment car-cleaning subscription product.
 
 ```bash
 cp .env.example .env   # or: make env
-make up                # API + Postgres
+make up                # API + Postgres + Ops UI
 make health            # liveness
 make ready             # DB connectivity
 ```
@@ -34,28 +34,31 @@ make ready             # DB connectivity
 
 ```bash
 make logs          # follow all logs
+make logs-ops-ui   # Ops UI only
 make migrate       # Alembic upgrade head
 make test          # backend tests
 make coverage      # tests + coverage (≥95% required; report in backend/htmlcov/)
 make format        # ruff fix + format
 make lint          # ruff check
-make ops-ui-install   # npm install for ops portal
-make ops-ui-dev       # Nuxt dev server → http://localhost:3000
+make ops-ui-dev    # Ops UI container only (or use make up for full stack)
+make ops-ui-dev-host  # optional: Nuxt on host Node (needs make ops-ui-install)
 make pre-commit-install   # once: run hooks before every git commit
 make pre-commit    # ruff + file checks on all files
 make down          # stop stack
 make help          # all targets
 ```
 
-### Ops UI (scaffold)
+### Ops UI
+
+Ops UI runs in Docker with the rest of the stack (`make up`). Source is bind-mounted for live reload.
 
 ```bash
-make up                 # backend + Postgres (if calling APIs later)
-make ops-ui-install
-make ops-ui-dev         # http://localhost:3000
+make up                 # db + api + ops-ui
+# open http://localhost:3000
+make logs-ops-ui
 ```
 
-See [`ops-ui/README.md`](ops-ui/README.md). App screens and auth are not built yet; ops APIs are under `/api/v1/ops/*`.
+See [`ops-ui/README.md`](ops-ui/README.md). Ops APIs live under `/api/v1/ops/*`.
 
 ## Monorepo layout
 
@@ -67,10 +70,10 @@ clean-my-car/
 │   ├── tests/
 │   ├── Dockerfile
 │   └── pyproject.toml
-├── ops-ui/               # Nuxt ops portal (internal)
+├── ops-ui/               # Nuxt ops portal (internal; Docker + optional host npm)
 ├── docs/                 # product requirements, design notes
 ├── ios/                  # (future) native iOS app
-├── docker-compose.yml    # local stack: api + db
+├── docker-compose.yml    # local stack: api + db + ops-ui
 ├── Makefile              # developer commands
 ├── .env.example
 └── README.md
@@ -87,7 +90,7 @@ Workflows live under `.github/workflows/`.
 | **CI** (`ci.yml`) | Push/PR to `main` | Backend: **Lint** → **Test** → **Docker build**; Ops UI: **Build** (path-filtered) |
 | **PR Title** (`pr-title.yml`) | Pull requests | Conventional Commits title check |
 
-Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). Ops UI build runs when `ops-ui/**` changes. The final **`CI`** job is the single gate to mark required in branch protection.
+Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). Ops UI stages run when `ops-ui/**` or compose changes. The final **`CI`** job is the single gate to mark required in branch protection.
 
 ### Branch protection (recommended)
 

@@ -6,6 +6,7 @@
 COMPOSE        := docker compose
 API_SERVICE    := api
 DB_SERVICE     := db
+OPS_UI_SERVICE := ops-ui
 BACKEND_DIR    := backend
 OPS_UI_DIR     := ops-ui
 
@@ -40,12 +41,13 @@ build: env ## Build images
 	$(COMPOSE) build
 
 .PHONY: up
-up: env ## Build and start API + Postgres (detached)
+up: env ## Build and start API + Postgres + Ops UI (detached)
 	$(COMPOSE) up --build -d
 	@echo ""
-	@echo "API:   http://localhost:$${API_PORT:-8000}"
-	@echo "Docs:  http://localhost:$${API_PORT:-8000}/docs"
-	@echo "Health: http://localhost:$${API_PORT:-8000}/api/v1/health"
+	@echo "API:     http://localhost:$${API_PORT:-8000}"
+	@echo "Docs:    http://localhost:$${API_PORT:-8000}/docs"
+	@echo "Ops UI:  http://localhost:$${OPS_UI_PORT:-3000}"
+	@echo "Health:  http://localhost:$${API_PORT:-8000}/api/v1/health"
 
 .PHONY: up-fg
 up-fg: env ## Start stack in foreground
@@ -78,6 +80,10 @@ logs-api: ## Follow API logs
 .PHONY: logs-db
 logs-db: ## Follow Postgres logs
 	$(COMPOSE) logs -f $(DB_SERVICE)
+
+.PHONY: logs-ops-ui
+logs-ops-ui: ## Follow Ops UI logs
+	$(COMPOSE) logs -f $(OPS_UI_SERVICE)
 
 # ---------------------------------------------------------------------------
 # Backend (API container)
@@ -219,24 +225,33 @@ db-reset: ## Drop DB volume and recreate stack (destructive)
 	@$(MAKE) migrate || true
 
 # ---------------------------------------------------------------------------
-# Ops UI (Nuxt portal under ops-ui/)
+# Ops UI (Nuxt portal — Docker by default; host npm optional)
 # ---------------------------------------------------------------------------
 
 .PHONY: ops-ui-install
-ops-ui-install: ## Install ops-ui npm dependencies
+ops-ui-install: ## Install ops-ui npm dependencies on the host (optional; not needed for Docker)
 	cd $(OPS_UI_DIR) && npm install
 
 .PHONY: ops-ui-dev
-ops-ui-dev: ## Run Nuxt ops portal on http://localhost:3000
+ops-ui-dev: env ## Start Ops UI container only (full stack: make up)
+	$(COMPOSE) up --build -d $(OPS_UI_SERVICE)
+	@echo "Ops UI: http://localhost:$${OPS_UI_PORT:-3000}"
+
+.PHONY: ops-ui-dev-host
+ops-ui-dev-host: ## Run Nuxt on the host (requires Node 20+ and make ops-ui-install)
 	cd $(OPS_UI_DIR) && npm run dev
 
 .PHONY: ops-ui-build
-ops-ui-build: ## Production build of ops-ui
+ops-ui-build: ## Production build of ops-ui (host npm)
 	cd $(OPS_UI_DIR) && npm run build
 
 .PHONY: ops-ui-preview
-ops-ui-preview: ## Preview production ops-ui build
+ops-ui-preview: ## Preview production ops-ui build (host npm)
 	cd $(OPS_UI_DIR) && npm run preview
+
+.PHONY: ops-ui-shell
+ops-ui-shell: ## Open a shell in the Ops UI container
+	$(COMPOSE) exec $(OPS_UI_SERVICE) /bin/sh
 
 # ---------------------------------------------------------------------------
 # Git helpers (conventional commits)

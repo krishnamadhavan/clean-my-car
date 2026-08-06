@@ -3,9 +3,9 @@
 ## Monorepo notes
 
 - Backend work lives under `backend/`.
-- Ops portal (Nuxt) lives under `ops-ui/` — scaffold only; use `make ops-ui-dev`.
+- Ops portal (Nuxt) lives under `ops-ui/` — included in `make up` as the `ops-ui` Docker service.
 - iOS will live under `ios/` (not scaffolded yet).
-- Use root `Makefile` and `docker-compose.yml` for local backend development.
+- Use root `Makefile` and `docker-compose.yml` for local development (API, Postgres, Ops UI).
 - Do not commit secrets. Use `.env` (gitignored); start from `.env.example`.
 
 ### Database design / ER diagram (required)

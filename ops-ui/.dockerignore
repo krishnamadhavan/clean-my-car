@@ -1,0 +1,28 @@
+# Dependencies & build outputs (rebuilt in image)
+node_modules
+.nuxt
+.output
+.data
+.nitro
+.cache
+dist
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs & OS junk
+logs
+*.log
+npm-debug.log*
+.DS_Store
+.fleet
+.idea
+*.swp
+*~
+
+# Git / docs (not needed in image)
+.git
+.gitignore
+README.md
