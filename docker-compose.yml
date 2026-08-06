@@ -99,7 +99,8 @@ services:
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      # First boot may reinstall deps when package-lock changes; allow warm-up.
+      start_period: 120s
 
 volumes:
   cmc_pgdata:
