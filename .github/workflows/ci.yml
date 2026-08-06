@@ -44,16 +44,14 @@ jobs:
         id: filter
         with:
           filters: |
+            # Only package trees (plus this workflow) — compose/Makefile are local-dev
+            # entrypoints and must not force full backend/ops suites on every infra tweak.
             backend:
               - 'backend/**'
-              - 'docker-compose.yml'
               - '.github/workflows/ci.yml'
-              - 'Makefile'
             ops_ui:
               - 'ops-ui/**'
-              - 'docker-compose.yml'
               - '.github/workflows/ci.yml'
-              - 'Makefile'
 
   # ---------------------------------------------------------------------------
   # Stage 1 — Lint
@@ -80,7 +78,16 @@ jobs:
         run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev
+        # Outer retries for transient PyPI / network timeouts (uv already retries per request)
+        run: |
+          for attempt in 1 2 3; do
+            if uv sync --frozen --group dev; then
+              exit 0
+            fi
+            echo "::warning::uv sync failed (attempt ${attempt}/3); retrying..."
+            sleep $((attempt * 10))
+          done
+          exit 1
 
       - name: Ruff check
         run: uv run ruff check src tests
@@ -142,7 +149,15 @@ jobs:
         run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev
+        run: |
+          for attempt in 1 2 3; do
+            if uv sync --frozen --group dev; then
+              exit 0
+            fi
+            echo "::warning::uv sync failed (attempt ${attempt}/3); retrying..."
+            sleep $((attempt * 10))
+          done
+          exit 1
 
       - name: Run pytest with coverage (≥95%)
         run: >

@@ -90,7 +90,7 @@ Workflows live under `.github/workflows/`.
 | **CI** (`ci.yml`) | Push/PR to `main` | Backend: **Lint** → **Test** → **Docker build**; Ops UI: **Build** (path-filtered) |
 | **PR Title** (`pr-title.yml`) | Pull requests | Conventional Commits title check |
 
-Backend stages run only when backend-related paths change (`backend/**`, compose, Makefile, CI workflow). Ops UI stages run when `ops-ui/**` or compose changes. The final **`CI`** job is the single gate to mark required in branch protection.
+Backend stages run only when `backend/**` (or the CI workflow) changes. Ops UI stages run when `ops-ui/**` (or the CI workflow) changes. The final **`CI`** job is the single gate to mark required in branch protection.
 
 ### Branch protection (recommended)
 
