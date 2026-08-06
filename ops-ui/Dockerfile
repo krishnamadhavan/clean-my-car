@@ -25,7 +25,9 @@ ENV NUXT_HOST=0.0.0.0 \
 FROM base AS deps
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# Skip lifecycle scripts: postinstall runs `nuxt prepare`, which needs the full
+# source tree (nuxt.config + app/). Scripts run after COPY in later stages.
+RUN npm ci --ignore-scripts
 
 # ---------------------------------------------------------------------------
 # Development
@@ -36,6 +38,8 @@ ENV NODE_ENV=development
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Generate .nuxt types after sources exist (deps intentionally skipped prepare).
+RUN npx nuxt prepare
 
 RUN chmod +x /app/docker-entrypoint.dev.sh
 
@@ -62,6 +66,7 @@ ARG NUXT_PUBLIC_OPS_API_PREFIX=/api/v1/ops
 ENV NUXT_PUBLIC_API_BASE=$NUXT_PUBLIC_API_BASE \
     NUXT_PUBLIC_OPS_API_PREFIX=$NUXT_PUBLIC_OPS_API_PREFIX
 
+# nuxt build generates .nuxt as needed (deps skipped prepare)
 RUN npm run build
 
 # ---------------------------------------------------------------------------
