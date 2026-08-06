@@ -44,11 +44,11 @@ jobs:
         id: filter
         with:
           filters: |
+            # Only package trees (plus this workflow) — compose/Makefile are local-dev
+            # entrypoints and must not force full backend/ops suites on every infra tweak.
             backend:
               - 'backend/**'
-              - 'docker-compose.yml'
               - '.github/workflows/ci.yml'
-              - 'Makefile'
             ops_ui:
               - 'ops-ui/**'
               - '.github/workflows/ci.yml'
@@ -78,7 +78,16 @@ jobs:
         run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev
+        # Outer retries for transient PyPI / network timeouts (uv already retries per request)
+        run: |
+          for attempt in 1 2 3; do
+            if uv sync --frozen --group dev; then
+              exit 0
+            fi
+            echo "::warning::uv sync failed (attempt ${attempt}/3); retrying..."
+            sleep $((attempt * 10))
+          done
+          exit 1
 
       - name: Ruff check
         run: uv run ruff check src tests
@@ -140,7 +149,15 @@ jobs:
         run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev
+        run: |
+          for attempt in 1 2 3; do
+            if uv sync --frozen --group dev; then
+              exit 0
+            fi
+            echo "::warning::uv sync failed (attempt ${attempt}/3); retrying..."
+            sleep $((attempt * 10))
+          done
+          exit 1
 
       - name: Run pytest with coverage (≥95%)
         run: >
@@ -175,7 +192,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ---------------------------------------------------------------------------
-  # Ops UI — Nuxt production build (scaffold / portal)
+  # Ops UI — Nuxt production build + Docker image
   # ---------------------------------------------------------------------------
   ops-ui-build:
     name: "Ops UI · Build"
@@ -202,13 +219,36 @@ jobs:
       - name: Production build
         run: npm run build
 
+  ops-ui-docker:
+    name: "Ops UI · Docker build"
+    needs: [changes, ops-ui-build]
+    if: needs.changes.outputs.ops_ui == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Ops UI image (production target)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ops-ui
+          file: ./ops-ui/Dockerfile
+          target: production
+          push: false
+          tags: clean-my-car-ops-ui:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   # ---------------------------------------------------------------------------
   # Gate — single required status check for branch protection
   # ---------------------------------------------------------------------------
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [changes, backend-lint, backend-test, backend-docker, ops-ui-build]
+    needs: [changes, backend-lint, backend-test, backend-docker, ops-ui-build, ops-ui-docker]
     if: always()
     steps:
       - name: Evaluate pipeline result
@@ -236,13 +276,14 @@ jobs:
 
           if [[ "${ops_ui}" == "true" ]]; then
             ui="${{ needs.ops-ui-build.result }}"
-            echo "ops-ui-build=${ui}"
-            if [[ "${ui}" != "success" ]]; then
-              echo "::error::Ops UI build failed."
+            ui_docker="${{ needs.ops-ui-docker.result }}"
+            echo "ops-ui-build=${ui} ops-ui-docker=${ui_docker}"
+            if [[ "${ui}" != "success" || "${ui_docker}" != "success" ]]; then
+              echo "::error::One or more required ops UI stages failed."
               failed=1
             fi
           else
-            echo "No ops-ui paths changed — ops UI stage skipped."
+            echo "No ops-ui paths changed — ops UI stages skipped."
           fi
 
           if [[ "${failed}" -ne 0 ]]; then

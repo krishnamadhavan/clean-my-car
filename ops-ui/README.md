@@ -2,8 +2,6 @@
 
 Nuxt 4 app for the **internal ops portal** (catalog admin, waitlist triage, pricing, support).
 
-This package is a **scaffold only**. Screens and API clients will be added next; the backend ops surface already lives at `/api/v1/ops/*` (see [`docs/OPS_API_INVENTORY.md`](../docs/OPS_API_INVENTORY.md)).
-
 | Resource | URL (local) |
 |----------|-------------|
 | Ops UI | http://localhost:3000 |
@@ -12,46 +10,79 @@ This package is a **scaffold only**. Screens and API clients will be added next;
 
 ## Prerequisites
 
-- Node.js **20+** (LTS recommended)
-- npm 10+
-- Backend stack running (`make up` from monorepo root) when calling APIs
+- [Docker](https://docs.docker.com/get-docker/) + Docker Compose v2 (recommended path)
+- Optional host Node: **20+** (LTS) if you prefer `make ops-ui-dev-host`
+- Backend stack (started with Ops UI via `make up`)
 
-## Setup
+## Docker (default)
 
-```bash
-# from monorepo root
-make ops-ui-install
-
-# or
-cd ops-ui
-cp .env.example .env   # optional; defaults match local backend
-npm install
-```
-
-## Development
+Ops UI is a first-class compose service (`ops-ui`), same as `api` and `db`.
 
 ```bash
 # monorepo root
-make ops-ui-dev
+make up                 # db + api + ops-ui (enables Compose profile ops-ui)
+# open http://localhost:3000
+make up-backend         # db + api only (skip Nuxt image)
 
-# or
-cd ops-ui && npm run dev
+make logs-ops-ui        # follow Nuxt logs
+make ops-ui-shell       # shell in the container
+make ops-ui-dev         # start ops-ui (also starts healthy api/db via depends_on)
+make down
 ```
 
-Dev server: http://localhost:3000
+| Compose detail | Value |
+|----------------|--------|
+| Service name | `ops-ui` |
+| Profile | `ops-ui` (enabled by `make up` / `COMPOSE_PROFILES=ops-ui`) |
+| Container | `cmc-ops-ui` |
+| Image target | `development` (live reload) |
+| Host port | `OPS_UI_PORT` (default `3000`) |
+| Source mount | `./ops-ui` → `/app` |
+| `node_modules` | named volume `ops_ui_node_modules` (seeded from the image) |
 
-Runtime config (public):
+The SPA calls the API from the **browser**, so `NUXT_PUBLIC_API_BASE` must be a host-reachable URL (default `http://localhost:8000`), not the Docker network hostname `api`.
+
+**Port coupling:**
+
+- If you change `API_PORT` in the root `.env`, also set `NUXT_PUBLIC_API_BASE` to the same host port (e.g. `API_PORT=8080` → `NUXT_PUBLIC_API_BASE=http://localhost:8080`). Compose cannot derive that URL from `API_PORT` alone.
+- If you change `OPS_UI_PORT`, also update the API `CORS_ORIGINS` list to include the new origin (e.g. `OPS_UI_PORT=3001` → `CORS_ORIGINS=http://localhost:3001,http://127.0.0.1:3001`). Otherwise the SPA loads but browser API calls fail CORS.
+
+Production image (CI / deploy):
+
+```bash
+docker build -t clean-my-car-ops-ui:local --target production ./ops-ui
+```
+
+## Host Node (optional)
+
+```bash
+make ops-ui-install
+make ops-ui-dev-host    # http://localhost:3000
+# or: cd ops-ui && npm run dev
+```
+
+Copy env if you need overrides:
+
+```bash
+cd ops-ui
+cp .env.example .env
+```
+
+## Runtime config (public)
 
 | Env | Default | Purpose |
 |-----|---------|---------|
-| `NUXT_PUBLIC_API_BASE` | `http://localhost:8000` | FastAPI origin |
+| `NUXT_PUBLIC_API_BASE` | `http://localhost:8000` | FastAPI origin (browser); must match published `API_PORT` |
 | `NUXT_PUBLIC_OPS_API_PREFIX` | `/api/v1/ops` | Ops routes prefix |
+| `OPS_UI_PORT` | `3000` | Host port published by compose |
+
+Root `.env` (from `.env.example`) is the source of truth for compose.
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Dev server (port 3000) |
+| `npm run dev` | Dev server (`0.0.0.0:3000`) |
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
 | `npm run generate` | Static generation (optional) |
@@ -63,9 +94,18 @@ ops-ui/
 ├── app/
 │   ├── app.vue
 │   ├── assets/css/main.css
-│   ├── layouts/default.vue
-│   └── pages/index.vue      # placeholder dashboard
+│   ├── components/
+│   ├── composables/
+│   ├── layouts/
+│   ├── middleware/
+│   ├── pages/
+│   ├── plugins/
+│   ├── types/
+│   └── utils/
 ├── public/
+├── Dockerfile              # multi-stage: development | production
+├── docker-entrypoint.dev.sh
+├── .dockerignore
 ├── nuxt.config.ts
 ├── package.json
 └── .env.example
@@ -104,5 +144,4 @@ Requires backend with bootstrap ops user (see root `.env.example` `OPS_BOOTSTRAP
 ## Out of scope (for now)
 
 - Role-based nav gating
-- Docker image for the UI
 - E2E browser tests

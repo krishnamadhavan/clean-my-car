@@ -4,8 +4,11 @@
 .DEFAULT_GOAL := help
 
 COMPOSE        := docker compose
+# Full stack includes the ops-ui Compose profile (see docker-compose.yml).
+COMPOSE_FULL   := COMPOSE_PROFILES=ops-ui $(COMPOSE)
 API_SERVICE    := api
 DB_SERVICE     := db
+OPS_UI_SERVICE := ops-ui
 BACKEND_DIR    := backend
 OPS_UI_DIR     := ops-ui
 
@@ -36,40 +39,50 @@ env: ## Create .env from .env.example if missing
 # ---------------------------------------------------------------------------
 
 .PHONY: build
-build: env ## Build images
-	$(COMPOSE) build
+build: env ## Build images (including ops-ui profile)
+	$(COMPOSE_FULL) build
 
 .PHONY: up
-up: env ## Build and start API + Postgres (detached)
-	$(COMPOSE) up --build -d
+up: env ## Build and start API + Postgres + Ops UI (detached)
+	$(COMPOSE_FULL) up --build -d
 	@echo ""
-	@echo "API:   http://localhost:$${API_PORT:-8000}"
-	@echo "Docs:  http://localhost:$${API_PORT:-8000}/docs"
-	@echo "Health: http://localhost:$${API_PORT:-8000}/api/v1/health"
+	@echo "API:     http://localhost:$${API_PORT:-8000}"
+	@echo "Docs:    http://localhost:$${API_PORT:-8000}/docs"
+	@echo "Ops UI:  http://localhost:$${OPS_UI_PORT:-3000}"
+	@echo "Health:  http://localhost:$${API_PORT:-8000}/api/v1/health"
+
+.PHONY: up-backend
+up-backend: env ## Build and start API + Postgres only (no Ops UI)
+	$(COMPOSE) up --build -d $(DB_SERVICE) $(API_SERVICE)
+	@echo ""
+	@echo "API:     http://localhost:$${API_PORT:-8000}"
+	@echo "Docs:    http://localhost:$${API_PORT:-8000}/docs"
+	@echo "Health:  http://localhost:$${API_PORT:-8000}/api/v1/health"
+	@echo "(Ops UI skipped — use make up or make ops-ui-dev)"
 
 .PHONY: up-fg
-up-fg: env ## Start stack in foreground
-	$(COMPOSE) up --build
+up-fg: env ## Start full stack in foreground (includes Ops UI)
+	$(COMPOSE_FULL) up --build
 
 .PHONY: down
 down: ## Stop containers (keep volumes)
-	$(COMPOSE) down
+	$(COMPOSE_FULL) down
 
 .PHONY: destroy
 destroy: ## Stop containers and delete volumes (destructive)
-	$(COMPOSE) down -v
+	$(COMPOSE_FULL) down -v
 
 .PHONY: restart
 restart: ## Restart all services
-	$(COMPOSE) restart
+	$(COMPOSE_FULL) restart
 
 .PHONY: ps
 ps: ## Show container status
-	$(COMPOSE) ps
+	$(COMPOSE_FULL) ps
 
 .PHONY: logs
 logs: ## Follow logs (all services)
-	$(COMPOSE) logs -f
+	$(COMPOSE_FULL) logs -f
 
 .PHONY: logs-api
 logs-api: ## Follow API logs
@@ -78,6 +91,10 @@ logs-api: ## Follow API logs
 .PHONY: logs-db
 logs-db: ## Follow Postgres logs
 	$(COMPOSE) logs -f $(DB_SERVICE)
+
+.PHONY: logs-ops-ui
+logs-ops-ui: ## Follow Ops UI logs
+	$(COMPOSE_FULL) logs -f $(OPS_UI_SERVICE)
 
 # ---------------------------------------------------------------------------
 # Backend (API container)
@@ -219,24 +236,33 @@ db-reset: ## Drop DB volume and recreate stack (destructive)
 	@$(MAKE) migrate || true
 
 # ---------------------------------------------------------------------------
-# Ops UI (Nuxt portal under ops-ui/)
+# Ops UI (Nuxt portal — Docker by default; host npm optional)
 # ---------------------------------------------------------------------------
 
 .PHONY: ops-ui-install
-ops-ui-install: ## Install ops-ui npm dependencies
+ops-ui-install: ## Install ops-ui npm dependencies on the host (optional; not needed for Docker)
 	cd $(OPS_UI_DIR) && npm install
 
 .PHONY: ops-ui-dev
-ops-ui-dev: ## Run Nuxt ops portal on http://localhost:3000
+ops-ui-dev: env ## Start Ops UI (pulls in healthy api/db via depends_on)
+	$(COMPOSE_FULL) up --build -d $(OPS_UI_SERVICE)
+	@echo "Ops UI: http://localhost:$${OPS_UI_PORT:-3000}"
+
+.PHONY: ops-ui-dev-host
+ops-ui-dev-host: ## Run Nuxt on the host (requires Node 20+ and make ops-ui-install)
 	cd $(OPS_UI_DIR) && npm run dev
 
 .PHONY: ops-ui-build
-ops-ui-build: ## Production build of ops-ui
+ops-ui-build: ## Production build of ops-ui (host npm)
 	cd $(OPS_UI_DIR) && npm run build
 
 .PHONY: ops-ui-preview
-ops-ui-preview: ## Preview production ops-ui build
+ops-ui-preview: ## Preview production ops-ui build (host npm)
 	cd $(OPS_UI_DIR) && npm run preview
+
+.PHONY: ops-ui-shell
+ops-ui-shell: ## Open a shell in the Ops UI container
+	$(COMPOSE_FULL) exec $(OPS_UI_SERVICE) /bin/sh
 
 # ---------------------------------------------------------------------------
 # Git helpers (conventional commits)

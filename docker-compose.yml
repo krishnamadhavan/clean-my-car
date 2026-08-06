@@ -1,5 +1,8 @@
-# Clean My Car monorepo — local development stack
-# Usage: make up  (or: docker compose up --build)
+# Clean My Car monorepo — local development stack (db + api + optional ops-ui)
+# Usage:
+#   make up           # db + api + ops-ui  (COMPOSE_PROFILES=ops-ui)
+#   make up-backend   # db + api only
+#   docker compose --profile ops-ui up --build
 
 services:
   db:
@@ -60,5 +63,51 @@ services:
       retries: 5
       start_period: 15s
 
+  ops-ui:
+    # Opt-in via profile so backend-only work need not build Nuxt.
+    # make up enables this profile; make up-backend leaves it off.
+    profiles: ["ops-ui"]
+    build:
+      context: ./ops-ui
+      dockerfile: Dockerfile
+      target: development
+    container_name: cmc-ops-ui
+    restart: unless-stopped
+    environment:
+      # Browser calls the API on the host-published port (not the docker network hostname).
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8000}
+      NUXT_PUBLIC_OPS_API_PREFIX: ${NUXT_PUBLIC_OPS_API_PREFIX:-/api/v1/ops}
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3000
+      HOST: 0.0.0.0
+      PORT: 3000
+      # Reliable file watching with bind mounts on Docker Desktop (macOS/Windows)
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+    ports:
+      - "${OPS_UI_PORT:-3000}:3000"
+    volumes:
+      # Live reload for local development
+      - ./ops-ui:/app
+      # Keep image-installed node_modules (do not use host node_modules)
+      - ops_ui_node_modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      # First boot may reinstall deps when package-lock changes; allow warm-up.
+      start_period: 120s
+
 volumes:
   cmc_pgdata:
+  ops_ui_node_modules:

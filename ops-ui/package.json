@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Clean My Car ops portal (Nuxt) — internal dashboard for catalog and support APIs",
   "scripts": {
-    "dev": "nuxt dev --port 3000",
+    "dev": "nuxt dev --host 0.0.0.0 --port 3000",
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
