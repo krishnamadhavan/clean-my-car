@@ -68,6 +68,7 @@ test(api): cover readiness failure when db is down
 3. Ensure local checks pass for backend changes: `make test` / `make lint` (or rely on CI).
 4. Use a conventional commit style for the **PR title** as well (e.g. `chore(backend): ...`). CI validates the title.
 5. Wait for the **CI** status check (lint → test → Docker build) before merge when backend paths changed.
+6. **UI evidence:** do **not** commit ops/UI screenshots into `docs/` (or elsewhere in the repo). Attach screenshots **directly on the PR** for review. Keep durable diagrams (e.g. [`docs/diagrams/database-er.svg`](docs/diagrams/database-er.svg)) in-repo when docs reference them.
 
 ### CI stages (backend)
 
