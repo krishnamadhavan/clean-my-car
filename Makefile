@@ -94,7 +94,7 @@ logs-db: ## Follow Postgres logs
 
 .PHONY: logs-ops-ui
 logs-ops-ui: ## Follow Ops UI logs
-	$(COMPOSE) logs -f $(OPS_UI_SERVICE)
+	$(COMPOSE_FULL) logs -f $(OPS_UI_SERVICE)
 
 # ---------------------------------------------------------------------------
 # Backend (API container)
@@ -262,7 +262,7 @@ ops-ui-preview: ## Preview production ops-ui build (host npm)
 
 .PHONY: ops-ui-shell
 ops-ui-shell: ## Open a shell in the Ops UI container
-	$(COMPOSE) exec $(OPS_UI_SERVICE) /bin/sh
+	$(COMPOSE_FULL) exec $(OPS_UI_SERVICE) /bin/sh
 
 # ---------------------------------------------------------------------------
 # Git helpers (conventional commits)
