@@ -41,12 +41,15 @@ COPY . .
 # Generate .nuxt types after sources exist (deps intentionally skipped prepare).
 RUN npx nuxt prepare
 
-RUN chmod +x /app/docker-entrypoint.dev.sh
+# Install entrypoint outside /app so compose bind-mount ./ops-ui:/app cannot
+# overwrite the script or its executable bit (Windows/zip checkouts).
+COPY docker-entrypoint.dev.sh /usr/local/bin/ops-ui-entrypoint
+RUN chmod +x /usr/local/bin/ops-ui-entrypoint
 
 EXPOSE 3000
 
 # Host/port also set in package.json "dev" script for local-outside-Docker use
-ENTRYPOINT ["/app/docker-entrypoint.dev.sh"]
+ENTRYPOINT ["/usr/local/bin/ops-ui-entrypoint"]
 CMD ["npm", "run", "dev"]
 
 # ---------------------------------------------------------------------------
