@@ -10,87 +10,114 @@
 
     <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
     <a-alert v-if="msg" type="success" show-icon :message="msg" style="margin-bottom: 1rem" />
+    <a-alert
+      v-if="!loading && !pricing && !error"
+      type="info"
+      show-icon
+      message="No pricing configured for this city yet"
+      description="Defaults below are placeholders. Click Save config to create the city pricing row, then set size and interior prices."
+      style="margin-bottom: 1rem"
+    />
+    <a-spin :spinning="loading">
+      <a-card title="Config (OPS-PRICE-02)" style="margin-bottom: 1rem">
+        <a-form layout="vertical" :model="config" @finish="saveConfig">
+          <a-row :gutter="16">
+            <a-col :xs="24" :md="8">
+              <a-form-item label="Currency" name="currency">
+                <a-input v-model:value="config.currency" :maxlength="3" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="8">
+              <a-form-item label="GST rate (bps, 1800 = 18%)" name="gst_rate_bps">
+                <a-input-number
+                  v-model:value="config.gst_rate_bps"
+                  :min="0"
+                  :max="10000"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="8">
+              <a-form-item label="Flags">
+                <a-space direction="vertical">
+                  <a-checkbox v-model:checked="config.amounts_include_gst">
+                    Amounts include GST
+                  </a-checkbox>
+                  <a-checkbox v-model:checked="config.is_active">Active</a-checkbox>
+                </a-space>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-button type="primary" html-type="submit" :loading="saving">Save config</a-button>
+        </a-form>
+      </a-card>
 
-    <a-card title="Config (OPS-PRICE-02)" style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="saveConfig">
-        <a-row :gutter="16">
-          <a-col :xs="24" :md="8">
-            <a-form-item label="Currency">
-              <a-input v-model:value="config.currency" :maxlength="3" />
-            </a-form-item>
-          </a-col>
-          <a-col :xs="24" :md="8">
-            <a-form-item label="GST rate (bps, 1800 = 18%)">
-              <a-input-number v-model:value="config.gst_rate_bps" :min="0" :max="10000" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-          <a-col :xs="24" :md="8">
-            <a-form-item label="Flags">
-              <a-space direction="vertical">
-                <a-checkbox v-model:checked="config.amounts_include_gst">Amounts include GST</a-checkbox>
-                <a-checkbox v-model:checked="config.is_active">Active</a-checkbox>
-              </a-space>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-button type="primary" html-type="submit" :loading="saving">Save config</a-button>
-      </a-form>
-    </a-card>
+      <a-card title="Size prices — ₹ / month (OPS-PRICE-03)" style="margin-bottom: 1rem">
+        <a-form layout="vertical" :model="sizeRupees" @finish="saveSizes">
+          <a-row :gutter="16">
+            <a-col v-for="tier in tiers" :key="tier" :xs="24" :sm="8">
+              <a-form-item :label="tier" :name="tier">
+                <a-input-number
+                  v-model:value="sizeRupees[tier]"
+                  :min="0"
+                  :step="0.01"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-button type="primary" html-type="submit" :loading="saving">
+            Replace size prices
+          </a-button>
+        </a-form>
+      </a-card>
 
-    <a-card title="Size prices — ₹ / month (OPS-PRICE-03)" style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="saveSizes">
-        <a-row :gutter="16">
-          <a-col v-for="tier in tiers" :key="tier" :xs="24" :sm="8">
-            <a-form-item :label="tier">
-              <a-input-number v-model:value="sizeRupees[tier]" :min="0" :step="0.01" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-button type="primary" html-type="submit" :loading="saving">Replace size prices</a-button>
-      </a-form>
-    </a-card>
+      <a-card title="Interior add-ons — ₹ / month (OPS-PRICE-04)" style="margin-bottom: 1rem">
+        <a-form layout="vertical" :model="interiorRupees" @finish="saveInteriors">
+          <a-row :gutter="16">
+            <a-col v-for="freq in freqs" :key="freq" :xs="12" :sm="6">
+              <a-form-item :label="`${freq}× / month`" :name="String(freq)">
+                <a-input-number
+                  v-model:value="interiorRupees[freq]"
+                  :min="0"
+                  :step="0.01"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-button type="primary" html-type="submit" :loading="saving">
+            Replace interior prices
+          </a-button>
+        </a-form>
+      </a-card>
 
-    <a-card title="Interior add-ons — ₹ / month (OPS-PRICE-04)" style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="saveInteriors">
-        <a-row :gutter="16">
-          <a-col v-for="freq in freqs" :key="freq" :xs="12" :sm="6">
-            <a-form-item :label="`${freq}× / month`">
-              <a-input-number
-                v-model:value="interiorRupees[freq]"
-                :min="0"
-                :step="0.01"
-                style="width: 100%"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-button type="primary" html-type="submit" :loading="saving">Replace interior prices</a-button>
-      </a-form>
-    </a-card>
-
-    <a-card v-if="pricing?.matrix?.length" title="Matrix">
-      <div class="ops-table-scroll">
-        <a-table
-          :columns="matrixColumns"
-          :data-source="pricing.matrix"
-          :pagination="false"
-          size="small"
-          :scroll="{ x: 560 }"
-          :row-key="(r) => `${r.size_tier}-${r.interior_frequency}`"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'base'">{{ formatPaise(record.base_amount_paise) }}</template>
-            <template v-else-if="column.key === 'interior'">
-              {{ formatPaise(record.interior_amount_paise) }}
+      <a-card v-if="pricing?.matrix?.length" title="Matrix">
+        <div class="ops-table-scroll">
+          <a-table
+            :columns="matrixColumns"
+            :data-source="pricing.matrix"
+            :pagination="false"
+            size="small"
+            :scroll="{ x: 560 }"
+            :row-key="(r) => `${r.size_tier}-${r.interior_frequency}`"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'base'">
+                {{ formatPaise(record.base_amount_paise) }}
+              </template>
+              <template v-else-if="column.key === 'interior'">
+                {{ formatPaise(record.interior_amount_paise) }}
+              </template>
+              <template v-else-if="column.key === 'total'">
+                <strong>{{ formatPaise(record.monthly_total_paise) }}</strong>
+              </template>
+              <template v-else-if="column.key === 'freq'">{{ record.interior_frequency }}×</template>
             </template>
-            <template v-else-if="column.key === 'total'">
-              <strong>{{ formatPaise(record.monthly_total_paise) }}</strong>
-            </template>
-            <template v-else-if="column.key === 'freq'">{{ record.interior_frequency }}×</template>
-          </template>
-        </a-table>
-      </div>
-    </a-card>
+          </a-table>
+        </div>
+      </a-card>
+    </a-spin>
   </div>
 </template>
 
@@ -109,6 +136,7 @@ const pricing = ref<CityPricing | null>(null)
 const error = ref('')
 const msg = ref('')
 const saving = ref(false)
+const loading = ref(true)
 
 const config = reactive({
   currency: 'INR',
@@ -155,6 +183,7 @@ function applyPricing(p: CityPricing) {
 }
 
 async function load() {
+  loading.value = true
   error.value = ''
   try {
     const p = await opsFetch<CityPricing>(`/cities/${cityId.value}/pricing`)
@@ -166,6 +195,8 @@ async function load() {
       return
     }
     error.value = e instanceof Error ? e.message : 'Failed to load pricing'
+  } finally {
+    loading.value = false
   }
 }
 
@@ -241,4 +272,5 @@ async function saveInteriors() {
 }
 
 onMounted(load)
+watch(cityId, load)
 </script>
