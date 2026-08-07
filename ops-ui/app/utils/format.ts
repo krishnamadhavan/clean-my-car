@@ -23,7 +23,21 @@ export function rupeesFromPaise(paise: number): string {
   return (paise / 100).toFixed(2)
 }
 
+/** Full week labels (0=Mon … 6=Sun) for display of stored service days. */
 export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+/**
+ * Selectable service days for society create/edit (Mon–Sat only).
+ * Sunday is not offered as a service day.
+ */
+export const SERVICE_WEEKDAY_OPTIONS = [
+  { label: 'Mon', value: 0 },
+  { label: 'Tue', value: 1 },
+  { label: 'Wed', value: 2 },
+  { label: 'Thu', value: 3 },
+  { label: 'Fri', value: 4 },
+  { label: 'Sat', value: 5 },
+] as const
 
 export function formatWeekdays(days: number[]): string {
   return days
