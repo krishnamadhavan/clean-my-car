@@ -27,7 +27,8 @@ class OpsVehicleMakeCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=120)
     is_active: bool = True
-    display_order: int = 0
+    # Omit or null → server assigns next free order (must stay unique).
+    display_order: int | None = Field(default=None)
 
     @field_validator("name")
     @classmethod

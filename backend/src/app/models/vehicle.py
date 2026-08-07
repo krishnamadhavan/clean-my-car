@@ -42,8 +42,13 @@ class VehicleMake(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+    # Unique sort key for ops/consumer make lists (uq_vehicle_makes_display_order).
     display_order: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+        unique=True,
     )
 
     models: Mapped[list[VehicleModel]] = relationship(

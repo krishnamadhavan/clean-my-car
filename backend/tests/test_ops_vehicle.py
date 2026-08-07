@@ -16,7 +16,7 @@ from app.schemas.ops_vehicle import (
     OpsVehicleModelCreate,
     OpsVehicleModelPatch,
 )
-from tests.helpers import register_and_login, unique_phone
+from tests.helpers import register_and_login, unique_display_order, unique_phone
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -74,10 +74,12 @@ async def test_make_and_model_catalog(client: AsyncClient) -> None:
     headers = _auth(await _ops_token(client))
     suffix = unique_phone()[:6]
 
+    order_a = unique_display_order()
+    order_b = unique_display_order()
     created = await client.post(
         "/api/v1/ops/vehicle-makes",
         headers=headers,
-        json={"name": f"  Tata {suffix}  ", "is_active": True, "display_order": 2},
+        json={"name": f"  Tata {suffix}  ", "is_active": True, "display_order": order_a},
     )
     assert created.status_code == 201, created.text
     make = created.json()
@@ -93,6 +95,15 @@ async def test_make_and_model_catalog(client: AsyncClient) -> None:
     assert dup.status_code == 409
     assert dup.json()["code"] == "vehicle_make_exists"
 
+    # Duplicate display_order
+    order_dup = await client.post(
+        "/api/v1/ops/vehicle-makes",
+        headers=headers,
+        json={"name": f"OrderClash {suffix}", "display_order": order_a},
+    )
+    assert order_dup.status_code == 409
+    assert order_dup.json()["code"] == "vehicle_make_display_order_exists"
+
     # Empty name rejected
     empty = await client.post(
         "/api/v1/ops/vehicle-makes",
@@ -104,7 +115,7 @@ async def test_make_and_model_catalog(client: AsyncClient) -> None:
     inactive_make = await client.post(
         "/api/v1/ops/vehicle-makes",
         headers=headers,
-        json={"name": f"DeadBrand {suffix}", "is_active": False, "display_order": 9},
+        json={"name": f"DeadBrand {suffix}", "is_active": False, "display_order": order_b},
     )
     assert inactive_make.status_code == 201
     inactive_make_id = inactive_make.json()["id"]
@@ -187,14 +198,23 @@ async def test_make_and_model_catalog(client: AsyncClient) -> None:
     assert conflict.status_code == 409
     assert conflict.json()["code"] == "vehicle_make_exists"
 
+    new_order = unique_display_order()
     patched_make = await client.patch(
         f"/api/v1/ops/vehicle-makes/{make_id}",
         headers=headers,
-        json={"display_order": 1, "name": f"  Tata Motors {suffix}  "},
+        json={"display_order": new_order, "name": f"  Tata Motors {suffix}  "},
     )
     assert patched_make.status_code == 200
-    assert patched_make.json()["display_order"] == 1
+    assert patched_make.json()["display_order"] == new_order
     assert patched_make.json()["name"] == f"Tata Motors {suffix}"
+
+    patch_order_dup = await client.patch(
+        f"/api/v1/ops/vehicle-makes/{make_id}",
+        headers=headers,
+        json={"display_order": order_b},
+    )
+    assert patch_order_dup.status_code == 409
+    assert patch_order_dup.json()["code"] == "vehicle_make_display_order_exists"
 
     patched_model = await client.patch(
         f"/api/v1/ops/vehicle-models/{model_id}",
