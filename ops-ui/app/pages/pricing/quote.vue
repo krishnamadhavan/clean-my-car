@@ -11,15 +11,19 @@
     </a-space>
 
     <a-card style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="runQuote">
+      <a-form layout="vertical" :model="form" @finish="runQuote">
         <a-row :gutter="16">
           <a-col :xs="24" :md="12">
-            <a-form-item label="City ID" :rules="[{ required: true }]">
+            <a-form-item
+              label="City ID"
+              name="city_id"
+              :rules="[{ required: true, message: 'City ID is required' }]"
+            >
               <a-input v-model:value="form.city_id" placeholder="UUID" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="6">
-            <a-form-item label="Size tier">
+            <a-form-item label="Size tier" name="size_tier">
               <a-select v-model:value="form.size_tier">
                 <a-select-option value="small">small</a-select-option>
                 <a-select-option value="medium">medium</a-select-option>
@@ -28,7 +32,7 @@
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="6">
-            <a-form-item label="Interior frequency">
+            <a-form-item label="Interior frequency" name="interior_frequency">
               <a-select v-model:value="form.interior_frequency">
                 <a-select-option :value="0">0</a-select-option>
                 <a-select-option :value="1">1</a-select-option>

@@ -8,25 +8,33 @@
     <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
     <a-card title="Add city" style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="createCity">
+      <a-form layout="vertical" :model="form" @finish="createCity">
         <a-row :gutter="16">
           <a-col :xs="24" :md="8">
-            <a-form-item label="Name" name="name" :rules="[{ required: true }]">
+            <a-form-item
+              label="Name"
+              name="name"
+              :rules="[{ required: true, message: 'City name is required' }]"
+            >
               <a-input v-model:value="form.name" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="8">
-            <a-form-item label="State" name="state" :rules="[{ required: true }]">
+            <a-form-item
+              label="State"
+              name="state"
+              :rules="[{ required: true, message: 'State is required' }]"
+            >
               <a-input v-model:value="form.state" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="4">
-            <a-form-item label="Display order">
+            <a-form-item label="Display order" name="display_order">
               <a-input-number v-model:value="form.display_order" style="width: 100%" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="4">
-            <a-form-item label="Active">
+            <a-form-item label="Active" name="is_active">
               <a-switch v-model:checked="form.is_active" />
             </a-form-item>
           </a-col>
