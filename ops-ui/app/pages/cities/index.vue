@@ -2,7 +2,7 @@
   <div>
     <a-typography-title :level="3" style="margin-top: 0">Cities</a-typography-title>
     <a-typography-paragraph type="secondary">
-      Location master data (OPS-LOC-01–03).
+      Location master data (OPS-LOC-01–03). State is chosen from the India states list.
     </a-typography-paragraph>
 
     <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
@@ -16,7 +16,7 @@
               name="name"
               :rules="[{ required: true, message: 'City name is required' }]"
             >
-              <a-input v-model:value="form.name" />
+              <a-input v-model:value="form.name" placeholder="e.g. Bengaluru" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="8">
@@ -25,7 +25,14 @@
               name="state"
               :rules="[{ required: true, message: 'State is required' }]"
             >
-              <a-input v-model:value="form.state" />
+              <a-select
+                v-model:value="form.state"
+                show-search
+                :options="INDIA_STATE_OPTIONS"
+                placeholder="Select state / UT"
+                option-filter-prop="label"
+                style="width: 100%"
+              />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="4">
@@ -50,7 +57,7 @@
         :loading="loading"
         row-key="id"
         :pagination="false"
-        :scroll="{ x: 640 }"
+        :scroll="{ x: 720 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'active'">
@@ -60,6 +67,7 @@
           </template>
           <template v-else-if="column.key === 'actions'">
             <a-space wrap>
+              <a-button type="link" size="small" @click="openEdit(record)">Edit</a-button>
               <a-button type="link" size="small" @click="navigateTo(`/cities/${record.id}`)">
                 Societies
               </a-button>
@@ -71,25 +79,94 @@
         </template>
       </a-table>
     </div>
+
+    <a-modal
+      v-model:open="editOpen"
+      title="Edit city"
+      :confirm-loading="editSaving"
+      ok-text="Save"
+      destroy-on-close
+      @ok="submitEdit"
+    >
+      <a-alert
+        v-if="editError"
+        type="error"
+        show-icon
+        :message="editError"
+        style="margin-bottom: 1rem"
+      />
+      <a-form ref="editFormRef" layout="vertical" :model="editForm">
+        <a-form-item
+          label="Name"
+          name="name"
+          :rules="[{ required: true, message: 'City name is required' }]"
+        >
+          <a-input v-model:value="editForm.name" />
+        </a-form-item>
+        <a-form-item
+          label="State"
+          name="state"
+          :rules="[{ required: true, message: 'State is required' }]"
+        >
+          <a-select
+            v-model:value="editForm.state"
+            show-search
+            :options="stateOptionsForEdit"
+            placeholder="Select state / UT"
+            option-filter-prop="label"
+            style="width: 100%"
+          />
+        </a-form-item>
+        <a-form-item label="Display order" name="display_order">
+          <a-input-number v-model:value="editForm.display_order" style="width: 100%" />
+        </a-form-item>
+        <a-form-item label="Active" name="is_active">
+          <a-switch v-model:checked="editForm.is_active" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { City, Paginated } from '~/types/ops'
+import { INDIA_STATE_OPTIONS, INDIA_STATES } from '~/utils/indiaStates'
 
 const { opsFetch } = useOpsApi()
 const cities = ref<City[]>([])
 const error = ref('')
 const saving = ref(false)
 const loading = ref(false)
-const form = reactive({ name: '', state: '', is_active: true, display_order: 0 })
+const form = reactive({ name: '', state: undefined as string | undefined, is_active: true, display_order: 0 })
+
+const editOpen = ref(false)
+const editSaving = ref(false)
+const editError = ref('')
+const editId = ref<string | null>(null)
+const editFormRef = ref<{ validate: () => Promise<void> } | null>(null)
+const editForm = reactive({
+  name: '',
+  state: undefined as string | undefined,
+  is_active: true,
+  display_order: 0,
+})
+
+/** Include legacy free-text state values so existing rows remain selectable. */
+const stateOptionsForEdit = computed(() => {
+  const options = [...INDIA_STATE_OPTIONS]
+  const current = editForm.state?.trim()
+  if (current && !INDIA_STATES.includes(current)) {
+    options.unshift({ label: `${current} (current)`, value: current })
+  }
+  return options
+})
 
 const columns = [
   { title: 'Name', dataIndex: 'name', key: 'name' },
   { title: 'State', dataIndex: 'state', key: 'state' },
   { title: 'Active', key: 'active' },
   { title: 'Order', dataIndex: 'display_order', key: 'order', width: 90 },
-  { title: '', key: 'actions' },
+  { title: '', key: 'actions', width: 260 },
 ]
 
 async function load() {
@@ -111,9 +188,17 @@ async function createCity() {
   saving.value = true
   error.value = ''
   try {
-    await opsFetch<City>('/cities', { method: 'POST', body: { ...form } })
+    await opsFetch<City>('/cities', {
+      method: 'POST',
+      body: {
+        name: form.name,
+        state: form.state,
+        is_active: form.is_active,
+        display_order: form.display_order,
+      },
+    })
     form.name = ''
-    form.state = ''
+    form.state = undefined
     form.display_order = 0
     form.is_active = true
     await load()
@@ -121,6 +206,45 @@ async function createCity() {
     error.value = e instanceof Error ? e.message : 'Create failed'
   } finally {
     saving.value = false
+  }
+}
+
+function openEdit(c: City) {
+  editId.value = c.id
+  editForm.name = c.name
+  editForm.state = c.state
+  editForm.is_active = c.is_active
+  editForm.display_order = c.display_order
+  editError.value = ''
+  editOpen.value = true
+}
+
+async function submitEdit() {
+  if (!editId.value) return Promise.reject(new Error('No city selected'))
+  editError.value = ''
+  try {
+    await editFormRef.value?.validate()
+  } catch {
+    return Promise.reject(new Error('validation failed'))
+  }
+  editSaving.value = true
+  try {
+    await opsFetch<City>(`/cities/${editId.value}`, {
+      method: 'PATCH',
+      body: {
+        name: editForm.name.trim(),
+        state: String(editForm.state).trim(),
+        is_active: editForm.is_active,
+        display_order: editForm.display_order,
+      },
+    })
+    editOpen.value = false
+    await load()
+  } catch (err: unknown) {
+    editError.value = err instanceof Error ? err.message : 'Update failed'
+    return Promise.reject(err)
+  } finally {
+    editSaving.value = false
   }
 }
 
