@@ -5,6 +5,7 @@
         <a-typography-title :level="3" style="margin: 0">Pricing</a-typography-title>
         <a-typography-paragraph type="secondary" style="margin-bottom: 0">
           City tariffs (OPS-PRICE-01–04, 06). Amounts stored in paise.
+          Open a city to load/save pricing via the ops API.
         </a-typography-paragraph>
       </div>
       <a-button type="primary" ghost @click="navigateTo('/pricing/quote')">Quote preview</a-button>
