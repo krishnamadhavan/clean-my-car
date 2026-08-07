@@ -63,37 +63,97 @@ class OpsVehicleService:
         )
 
     async def create_make(self, data: OpsVehicleMakeCreate) -> OpsVehicleMakeOut:
+        order = data.display_order
+        if order is None:
+            order = await self._next_make_display_order()
+        else:
+            await self._ensure_make_display_order_available(order)
+        await self._ensure_make_name_available(data.name)
         make = VehicleMake(
             name=data.name,
             is_active=data.is_active,
-            display_order=data.display_order,
+            display_order=order,
         )
         self.session.add(make)
         try:
             await self.session.commit()
         except IntegrityError as exc:
             await self.session.rollback()
-            raise ConflictError(
-                "A vehicle make with this name already exists",
-                code="vehicle_make_exists",
-            ) from exc
+            raise self._make_integrity_conflict(exc, order=order) from exc
         await self.session.refresh(make)
         return OpsVehicleMakeOut.model_validate(make)
 
     async def patch_make(self, make_id: UUID, data: OpsVehicleMakePatch) -> OpsVehicleMakeOut:
         make = await self._get_make(make_id)
-        for key, value in data.model_dump(exclude_unset=True).items():
+        payload = data.model_dump(exclude_unset=True)
+        if "display_order" in payload and payload["display_order"] is not None:
+            await self._ensure_make_display_order_available(
+                int(payload["display_order"]),
+                exclude_make_id=make_id,
+            )
+        if "name" in payload and payload["name"] is not None:
+            await self._ensure_make_name_available(str(payload["name"]), exclude_make_id=make_id)
+        for key, value in payload.items():
             setattr(make, key, value)
         try:
             await self.session.commit()
         except IntegrityError as exc:
             await self.session.rollback()
+            order = payload.get("display_order", make.display_order)
+            raise self._make_integrity_conflict(exc, order=order) from exc
+        await self.session.refresh(make)
+        return OpsVehicleMakeOut.model_validate(make)
+
+    async def _next_make_display_order(self) -> int:
+        result = await self.session.execute(
+            select(func.coalesce(func.max(VehicleMake.display_order), -1))
+        )
+        return int(result.scalar_one()) + 1
+
+    async def _ensure_make_display_order_available(
+        self,
+        order: int,
+        *,
+        exclude_make_id: UUID | None = None,
+    ) -> None:
+        q = select(VehicleMake.id).where(VehicleMake.display_order == order)
+        if exclude_make_id is not None:
+            q = q.where(VehicleMake.id != exclude_make_id)
+        taken = (await self.session.execute(q.limit(1))).scalar_one_or_none()
+        if taken is not None:
+            raise ConflictError(
+                f"display_order {order} is already used by another vehicle make",
+                code="vehicle_make_display_order_exists",
+            )
+
+    async def _ensure_make_name_available(
+        self,
+        name: str,
+        *,
+        exclude_make_id: UUID | None = None,
+    ) -> None:
+        q = select(VehicleMake.id).where(func.lower(VehicleMake.name) == name.lower())
+        if exclude_make_id is not None:
+            q = q.where(VehicleMake.id != exclude_make_id)
+        taken = (await self.session.execute(q.limit(1))).scalar_one_or_none()
+        if taken is not None:
             raise ConflictError(
                 "A vehicle make with this name already exists",
                 code="vehicle_make_exists",
-            ) from exc
-        await self.session.refresh(make)
-        return OpsVehicleMakeOut.model_validate(make)
+            )
+
+    @staticmethod
+    def _make_integrity_conflict(exc: IntegrityError, *, order: int | None) -> ConflictError:
+        detail = str(getattr(exc, "orig", None) or exc).lower()
+        if "display_order" in detail or "uq_vehicle_makes_display_order" in detail:
+            return ConflictError(
+                f"display_order {order} is already used by another vehicle make",
+                code="vehicle_make_display_order_exists",
+            )
+        return ConflictError(
+            "A vehicle make with this name already exists",
+            code="vehicle_make_exists",
+        )
 
     async def list_models(
         self,

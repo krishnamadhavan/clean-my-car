@@ -111,8 +111,9 @@ class OpsSocietyCreate(BaseModel):
         if len(set(value)) != 3:
             raise ValueError("service weekdays must be unique")
         for d in value:
-            if d < 0 or d > 6:
-                raise ValueError("weekdays must be 0 (Mon) … 6 (Sun)")
+            # 0=Mon … 5=Sat; Sunday (6) is not a service day.
+            if d < 0 or d > 5:
+                raise ValueError("weekdays must be 0 (Mon) … 5 (Sat); Sunday is not allowed")
         return sorted(value)
 
 
@@ -153,8 +154,8 @@ class OpsSocietyPatch(BaseModel):
         if len(set(value)) != 3:
             raise ValueError("service weekdays must be unique")
         for d in value:
-            if d < 0 or d > 6:
-                raise ValueError("weekdays must be 0 (Mon) … 6 (Sun)")
+            if d < 0 or d > 5:
+                raise ValueError("weekdays must be 0 (Mon) … 5 (Sat); Sunday is not allowed")
         return sorted(value)
 
 

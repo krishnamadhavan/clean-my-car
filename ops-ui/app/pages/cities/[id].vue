@@ -4,7 +4,7 @@
       <div>
         <a-typography-title :level="3" style="margin: 0">{{ city?.name || 'City' }}</a-typography-title>
         <a-typography-paragraph type="secondary" style="margin-bottom: 0">
-          Societies (OPS-LOC-04–07). Service weekdays: pick exactly 3.
+          Societies (OPS-LOC-04–07). Service weekdays: pick exactly 3 (Mon–Sat; no Sunday).
         </a-typography-paragraph>
       </div>
       <a-button @click="navigateTo('/cities')">All cities</a-button>
@@ -30,8 +30,11 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="Service weekdays (exactly 3)" name="service_weekdays">
-          <a-checkbox-group v-model:value="form.service_weekdays" :options="weekdayOptions" />
+        <a-form-item label="Service weekdays (exactly 3, Mon–Sat)" name="service_weekdays">
+          <a-checkbox-group
+            v-model:value="form.service_weekdays"
+            :options="[...SERVICE_WEEKDAY_OPTIONS]"
+          />
         </a-form-item>
         <a-form-item label="Serviceable (live)" name="is_serviceable">
           <a-switch v-model:checked="form.is_serviceable" />
@@ -76,7 +79,7 @@
 
 <script setup lang="ts">
 import type { City, Paginated, Society } from '~/types/ops'
-import { formatWeekdays, WEEKDAY_LABELS } from '~/utils/format'
+import { formatWeekdays, SERVICE_WEEKDAY_OPTIONS } from '~/utils/format'
 
 const route = useRoute()
 const cityId = computed(() => String(route.params.id))
@@ -92,8 +95,6 @@ const form = reactive({
   service_weekdays: [0, 2, 4] as number[],
   is_serviceable: false,
 })
-
-const weekdayOptions = WEEKDAY_LABELS.map((label, value) => ({ label, value }))
 
 const columns = [
   { title: 'Name', key: 'name' },

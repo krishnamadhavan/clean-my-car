@@ -46,9 +46,14 @@ def test_ops_location_schema_validators() -> None:
     with pytest.raises(ValidationError):
         OpsSocietyCreate(name="X", service_weekdays=[0, 1, 7])
     with pytest.raises(ValidationError):
+        # Sunday (6) is not a service day
+        OpsSocietyCreate(name="X", service_weekdays=[0, 1, 6])
+    with pytest.raises(ValidationError):
         OpsSocietyCreate(name="  ", service_weekdays=[0, 1, 2])
     with pytest.raises(ValidationError):
         OpsSocietyPatch(service_weekdays=[0, 1])
+    with pytest.raises(ValidationError):
+        OpsSocietyPatch(service_weekdays=[4, 5, 6])
     with pytest.raises(ValidationError):
         OpsSocietyPatch(name="  ")
     assert OpsSocietyCreate(

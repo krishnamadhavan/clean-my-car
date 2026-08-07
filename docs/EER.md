@@ -30,7 +30,7 @@ Also refresh the short notes below if relationships change.
 | `refresh_tokens` | Hashed refresh sessions |
 | `otp_challenges` | Phone OTP challenges (no user FK) |
 | `waitlist_entries` | Demand capture when society not live (Module 4); one per user |
-| `vehicle_makes` | Car brands (ops catalog) |
+| `vehicle_makes` | Car brands (ops catalog); **`display_order` unique** |
 | `vehicle_models` | Models under a make + **ops-defined** size_tier |
 | `vehicles` | One vehicle per user; `model_id` + size_tier snapshot |
 | `city_pricing` | Per-city GST/currency presentation (Module 6) |
@@ -69,3 +69,4 @@ Also refresh the short notes below if relationships change.
 | `20260802_0006` | city_pricing, city_size_prices, city_interior_prices |
 | `20260803_0007` | ops_operators, ops_refresh_tokens |
 | `20260807_0008` | cities.display_order unique index |
+| `20260807_0009` | vehicle_makes.display_order unique index |

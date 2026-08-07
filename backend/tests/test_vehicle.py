@@ -9,7 +9,7 @@ from httpx import AsyncClient
 
 from app.db.session import AsyncSessionLocal
 from app.models.vehicle import VehicleMake, VehicleModel, VehicleSizeTier
-from tests.helpers import register_and_login
+from tests.helpers import register_and_login, unique_display_order
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -19,9 +19,21 @@ def _auth(access: str) -> dict[str, str]:
 async def _seed_catalog() -> dict:
     # Unique names so parallel/sequential tests sharing one DB do not collide.
     suffix = uuid.uuid4().hex[:8]
-    maruti = VehicleMake(name=f"Maruti Suzuki {suffix}", is_active=True, display_order=1)
-    hyundai = VehicleMake(name=f"Hyundai {suffix}", is_active=True, display_order=2)
-    hidden = VehicleMake(name=f"Hidden Brand {suffix}", is_active=False, display_order=99)
+    maruti = VehicleMake(
+        name=f"Maruti Suzuki {suffix}",
+        is_active=True,
+        display_order=unique_display_order(),
+    )
+    hyundai = VehicleMake(
+        name=f"Hyundai {suffix}",
+        is_active=True,
+        display_order=unique_display_order(),
+    )
+    hidden = VehicleMake(
+        name=f"Hidden Brand {suffix}",
+        is_active=False,
+        display_order=unique_display_order(),
+    )
 
     async with AsyncSessionLocal() as session:
         session.add_all([maruti, hyundai, hidden])
