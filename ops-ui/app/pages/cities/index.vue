@@ -3,6 +3,7 @@
     <a-typography-title :level="3" style="margin-top: 0">Cities</a-typography-title>
     <a-typography-paragraph type="secondary">
       Location master data (OPS-LOC-01–03). State is chosen from the India states list.
+      Display order must be unique (leave blank on create to auto-assign the next free value).
     </a-typography-paragraph>
 
     <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
@@ -36,8 +37,18 @@
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="4">
-            <a-form-item label="Display order" name="display_order">
-              <a-input-number v-model:value="form.display_order" style="width: 100%" />
+            <a-form-item
+              label="Display order"
+              name="display_order"
+              :rules="[{ validator: validateCreateDisplayOrder }]"
+              extra="Unique sort key. Empty = next free."
+            >
+              <a-input-number
+                v-model:value="form.display_order"
+                :min="0"
+                style="width: 100%"
+                placeholder="auto"
+              />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="4">
@@ -117,8 +128,16 @@
             style="width: 100%"
           />
         </a-form-item>
-        <a-form-item label="Display order" name="display_order">
-          <a-input-number v-model:value="editForm.display_order" style="width: 100%" />
+        <a-form-item
+          label="Display order"
+          name="display_order"
+          :rules="[
+            { required: true, message: 'Display order is required' },
+            { validator: validateEditDisplayOrder },
+          ]"
+          extra="Must be unique across all cities."
+        >
+          <a-input-number v-model:value="editForm.display_order" :min="0" style="width: 100%" />
         </a-form-item>
         <a-form-item label="Active" name="is_active">
           <a-switch v-model:checked="editForm.is_active" />
@@ -137,7 +156,12 @@ const cities = ref<City[]>([])
 const error = ref('')
 const saving = ref(false)
 const loading = ref(false)
-const form = reactive({ name: '', state: undefined as string | undefined, is_active: true, display_order: 0 })
+const form = reactive({
+  name: '',
+  state: undefined as string | undefined,
+  is_active: true,
+  display_order: null as number | null,
+})
 
 const editOpen = ref(false)
 const editSaving = ref(false)
@@ -161,6 +185,31 @@ const stateOptionsForEdit = computed(() => {
   return options
 })
 
+const usedDisplayOrders = computed(() => new Set(cities.value.map((c) => c.display_order)))
+
+async function validateCreateDisplayOrder(_rule: unknown, value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value as number)) {
+    return Promise.resolve()
+  }
+  if (usedDisplayOrders.value.has(value)) {
+    return Promise.reject(new Error(`Display order ${value} is already used`))
+  }
+  return Promise.resolve()
+}
+
+async function validateEditDisplayOrder(_rule: unknown, value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value as number)) {
+    return Promise.reject(new Error('Display order is required'))
+  }
+  const taken = cities.value.some(
+    (c) => c.display_order === value && c.id !== editId.value,
+  )
+  if (taken) {
+    return Promise.reject(new Error(`Display order ${value} is already used`))
+  }
+  return Promise.resolve()
+}
+
 const columns = [
   { title: 'Name', dataIndex: 'name', key: 'name' },
   { title: 'State', dataIndex: 'state', key: 'state' },
@@ -177,6 +226,8 @@ async function load() {
       query: { include_inactive: true, page_size: 100 },
     })
     cities.value = data.items
+    // Prefer empty (server auto-assign) after each load so create defaults stay free.
+    form.display_order = null
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load cities'
   } finally {
@@ -188,18 +239,21 @@ async function createCity() {
   saving.value = true
   error.value = ''
   try {
+    const body: Record<string, unknown> = {
+      name: form.name,
+      state: form.state,
+      is_active: form.is_active,
+    }
+    if (form.display_order !== null && form.display_order !== undefined) {
+      body.display_order = form.display_order
+    }
     await opsFetch<City>('/cities', {
       method: 'POST',
-      body: {
-        name: form.name,
-        state: form.state,
-        is_active: form.is_active,
-        display_order: form.display_order,
-      },
+      body,
     })
     form.name = ''
     form.state = undefined
-    form.display_order = 0
+    form.display_order = null
     form.is_active = true
     await load()
   } catch (e: unknown) {

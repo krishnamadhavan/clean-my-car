@@ -10,11 +10,22 @@ from app.models.city import City
 from app.models.pricing import CityInteriorPrice, CityPricing, CitySizePrice
 from app.models.society import Society
 from app.models.vehicle import VehicleSizeTier
+from tests.helpers import unique_city_display_order
 
 
 async def _seed_pricing() -> dict:
-    city = City(name="Bengaluru", state="Karnataka", is_active=True, display_order=1)
-    other = City(name="No Prices", state="XX", is_active=True, display_order=2)
+    city = City(
+        name="Bengaluru",
+        state="Karnataka",
+        is_active=True,
+        display_order=unique_city_display_order(),
+    )
+    other = City(
+        name="No Prices",
+        state="XX",
+        is_active=True,
+        display_order=unique_city_display_order(),
+    )
 
     async with AsyncSessionLocal() as session:
         session.add_all([city, other])

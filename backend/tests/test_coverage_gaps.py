@@ -23,7 +23,7 @@ from app.models.city import City
 from app.models.society import Society
 from app.models.user import User
 from app.schemas.user import MeUpdate
-from tests.helpers import register_and_login, unique_phone
+from tests.helpers import register_and_login, unique_city_display_order, unique_phone
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -277,8 +277,18 @@ async def test_deleted_user_naive_datetime_cooloff(client: AsyncClient) -> None:
 
 
 async def _seed() -> dict:
-    city = City(name=f"City-{uuid4().hex[:6]}", state="KA", is_active=True, display_order=1)
-    other = City(name=f"Other-{uuid4().hex[:6]}", state="MH", is_active=True, display_order=2)
+    city = City(
+        name=f"City-{uuid4().hex[:6]}",
+        state="KA",
+        is_active=True,
+        display_order=unique_city_display_order(),
+    )
+    other = City(
+        name=f"Other-{uuid4().hex[:6]}",
+        state="MH",
+        is_active=True,
+        display_order=unique_city_display_order(),
+    )
     async with AsyncSessionLocal() as session:
         session.add_all([city, other])
         await session.flush()

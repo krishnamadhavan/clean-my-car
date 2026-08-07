@@ -12,7 +12,7 @@ from app.models.city import City
 from app.models.ops_operator import OPS_ROLE_SUPPORT, OpsOperator
 from app.models.society import Society
 from app.models.user import User
-from tests.helpers import register_and_login, unique_phone
+from tests.helpers import register_and_login, unique_city_display_order, unique_phone
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -162,7 +162,12 @@ async def test_get_user_with_location(client: AsyncClient) -> None:
     tokens = await register_and_login(client)
     user_id = tokens["user"]["id"]
     async with AsyncSessionLocal() as session:
-        city = City(name="Chennai", state="TN", is_active=True, display_order=1)
+        city = City(
+            name="Chennai",
+            state="TN",
+            is_active=True,
+            display_order=unique_city_display_order(),
+        )
         session.add(city)
         await session.flush()
         society = Society(

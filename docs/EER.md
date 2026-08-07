@@ -24,7 +24,7 @@ Also refresh the short notes below if relationships change.
 
 | Table | Role |
 |-------|------|
-| `cities` | Active service cities |
+| `cities` | Active service cities; **`display_order` unique** |
 | `societies` | Live apartment societies + 3 service weekdays |
 | `users` | Accounts; optional `city_id` / `society_id` |
 | `refresh_tokens` | Hashed refresh sessions |
@@ -68,3 +68,4 @@ Also refresh the short notes below if relationships change.
 | `20260802_0005` | vehicle_makes, vehicle_models, vehicles |
 | `20260802_0006` | city_pricing, city_size_prices, city_interior_prices |
 | `20260803_0007` | ops_operators, ops_refresh_tokens |
+| `20260807_0008` | cities.display_order unique index |

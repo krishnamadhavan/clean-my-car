@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from app.db.session import AsyncSessionLocal
 from app.models.city import City
 from app.models.society import Society
-from tests.helpers import register_and_login
+from tests.helpers import register_and_login, unique_city_display_order
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -17,8 +17,18 @@ def _auth(access: str) -> dict[str, str]:
 
 async def _seed_catalog() -> dict:
     """Insert active city + live/non-live societies; return ids."""
-    city = City(name="Bengaluru", state="Karnataka", is_active=True, display_order=1)
-    inactive_city = City(name="Hidden", state="XX", is_active=False, display_order=99)
+    city = City(
+        name="Bengaluru",
+        state="Karnataka",
+        is_active=True,
+        display_order=unique_city_display_order(),
+    )
+    inactive_city = City(
+        name="Hidden",
+        state="XX",
+        is_active=False,
+        display_order=unique_city_display_order(),
+    )
 
     async with AsyncSessionLocal() as session:
         session.add_all([city, inactive_city])
