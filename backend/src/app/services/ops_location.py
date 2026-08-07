@@ -5,9 +5,10 @@ from __future__ import annotations
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.models.city import City
 from app.models.society import Society
 from app.schemas.ops_location import (
@@ -57,25 +58,70 @@ class OpsLocationService:
         )
 
     async def create_city(self, data: OpsCityCreate) -> OpsCityOut:
+        order = data.display_order
+        if order is None:
+            order = await self._next_city_display_order()
+        else:
+            await self._ensure_city_display_order_available(order)
         city = City(
             name=data.name,
             state=data.state,
             is_active=data.is_active,
-            display_order=data.display_order,
+            display_order=order,
         )
         self.session.add(city)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ConflictError(
+                f"display_order {order} is already used by another city",
+                code="city_display_order_exists",
+            ) from exc
         await self.session.refresh(city)
         return OpsCityOut.model_validate(city)
 
     async def patch_city(self, city_id: UUID, data: OpsCityPatch) -> OpsCityOut:
         city = await self._get_city(city_id)
         payload = data.model_dump(exclude_unset=True)
+        if "display_order" in payload and payload["display_order"] is not None:
+            await self._ensure_city_display_order_available(
+                int(payload["display_order"]),
+                exclude_city_id=city_id,
+            )
         for key, value in payload.items():
             setattr(city, key, value)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            order = payload.get("display_order", city.display_order)
+            raise ConflictError(
+                f"display_order {order} is already used by another city",
+                code="city_display_order_exists",
+            ) from exc
         await self.session.refresh(city)
         return OpsCityOut.model_validate(city)
+
+    async def _next_city_display_order(self) -> int:
+        result = await self.session.execute(select(func.coalesce(func.max(City.display_order), -1)))
+        return int(result.scalar_one()) + 1
+
+    async def _ensure_city_display_order_available(
+        self,
+        order: int,
+        *,
+        exclude_city_id: UUID | None = None,
+    ) -> None:
+        q = select(City.id).where(City.display_order == order)
+        if exclude_city_id is not None:
+            q = q.where(City.id != exclude_city_id)
+        taken = (await self.session.execute(q.limit(1))).scalar_one_or_none()
+        if taken is not None:
+            raise ConflictError(
+                f"display_order {order} is already used by another city",
+                code="city_display_order_exists",
+            )
 
     async def list_societies(
         self,

@@ -12,6 +12,16 @@ def unique_phone() -> str:
     return f"9{suffix:09d}"[:10]
 
 
+def unique_city_display_order() -> int:
+    """Return a display_order unique enough for the shared suite DB.
+
+    Uses a wide random range so values do not collide with API auto-assign
+    (``max(display_order)+1``) or with other ORM seeds in the same process.
+    """
+    # Positive 31-bit range; collision risk is negligible for suite size.
+    return uuid.uuid4().int % 2_000_000_000
+
+
 async def register_and_login(client: AsyncClient, phone: str | None = None) -> dict:
     """OTP request + verify; returns token pair JSON body."""
     phone = phone or unique_phone()

@@ -10,7 +10,7 @@ from app.core.passwords import hash_password
 from app.db.session import AsyncSessionLocal
 from app.models.ops_operator import OPS_ROLE_CATALOG_ADMIN, OpsOperator
 from app.schemas.ops_location import OpsCityCreate, OpsCityPatch, OpsSocietyCreate, OpsSocietyPatch
-from tests.helpers import unique_phone
+from tests.helpers import unique_city_display_order, unique_phone
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -98,19 +98,66 @@ async def test_create_list_patch_city(client: AsyncClient) -> None:
     )
     assert all(c["id"] != city_id for c in active_only.json()["items"])
 
+    new_order = unique_city_display_order()
     patched = await client.patch(
         f"/api/v1/ops/cities/{city_id}",
         headers=headers,
-        json={"is_active": True, "display_order": 1},
+        json={"is_active": True, "display_order": new_order},
     )
     assert patched.status_code == 200
     assert patched.json()["is_active"] is True
-    assert patched.json()["display_order"] == 1
+    assert patched.json()["display_order"] == new_order
 
     # Consumer can see it once active
     consumer = await client.get("/api/v1/cities")
     assert consumer.status_code == 200
     assert any(c["id"] == city_id for c in consumer.json())
+
+
+async def test_city_display_order_unique(client: AsyncClient) -> None:
+    headers = _auth(await _ops_token(client))
+    order = unique_city_display_order()
+    other = unique_city_display_order()
+
+    first = await client.post(
+        "/api/v1/ops/cities",
+        headers=headers,
+        json={"name": "Order A", "state": "Karnataka", "display_order": order},
+    )
+    assert first.status_code == 201, first.text
+
+    dup = await client.post(
+        "/api/v1/ops/cities",
+        headers=headers,
+        json={"name": "Order B", "state": "Karnataka", "display_order": order},
+    )
+    assert dup.status_code == 409
+    assert dup.json()["code"] == "city_display_order_exists"
+
+    # Explicit second order (avoid auto-assign colliding with the shared test counter)
+    second = await client.post(
+        "/api/v1/ops/cities",
+        headers=headers,
+        json={"name": "Order C", "state": "Karnataka", "display_order": other},
+    )
+    assert second.status_code == 201, second.text
+    assert second.json()["display_order"] == other
+
+    auto = await client.post(
+        "/api/v1/ops/cities",
+        headers=headers,
+        json={"name": "Order D", "state": "Karnataka"},
+    )
+    assert auto.status_code == 201, auto.text
+    assert auto.json()["display_order"] not in {order, other}
+
+    patch_dup = await client.patch(
+        f"/api/v1/ops/cities/{second.json()['id']}",
+        headers=headers,
+        json={"display_order": order},
+    )
+    assert patch_dup.status_code == 409, patch_dup.text
+    assert patch_dup.json()["code"] == "city_display_order_exists"
 
 
 async def test_society_crud_and_consumer_live_filter(client: AsyncClient) -> None:

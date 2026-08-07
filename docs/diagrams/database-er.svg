@@ -17,7 +17,7 @@
     <line x1="40" y1="108" x2="280" y2="108" stroke="#374151"/>
     <text x="52" y="128" font-size="12" fill="#111"><tspan font-weight="700" fill="#b45309">PK</tspan>  id</text>
     <text x="52" y="150" font-size="12" fill="#111">name, state, is_active</text>
-    <text x="52" y="172" font-size="12" fill="#111">display_order</text>
+    <text x="52" y="172" font-size="12" fill="#111"><tspan font-weight="700" fill="#7c3aed">UQ</tspan>  display_order</text>
     <text x="52" y="194" font-size="12" fill="#111">created_at, updated_at</text>
   </g>
 

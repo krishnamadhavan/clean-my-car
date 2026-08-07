@@ -12,7 +12,7 @@ from app.models.city import City
 from app.models.ops_operator import OPS_ROLE_SUPPORT, OpsOperator
 from app.models.waitlist import WaitlistEntry, WaitlistStatus
 from app.schemas.ops_waitlist import OpsWaitlistPatch
-from tests.helpers import unique_phone
+from tests.helpers import unique_city_display_order, unique_phone
 
 
 def _auth(access: str) -> dict[str, str]:
@@ -44,8 +44,18 @@ async def _seed_entries() -> dict:
     phone_a = f"+91{unique_phone()}"
     phone_b = f"+91{unique_phone()}"
     async with AsyncSessionLocal() as session:
-        city1 = City(name="Mumbai", state="MH", is_active=True, display_order=1)
-        city2 = City(name="Delhi", state="DL", is_active=True, display_order=2)
+        city1 = City(
+            name="Mumbai",
+            state="MH",
+            is_active=True,
+            display_order=unique_city_display_order(),
+        )
+        city2 = City(
+            name="Delhi",
+            state="DL",
+            is_active=True,
+            display_order=unique_city_display_order(),
+        )
         session.add_all([city1, city2])
         await session.flush()
         e1 = WaitlistEntry(
