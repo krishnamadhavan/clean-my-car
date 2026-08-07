@@ -13,23 +13,27 @@
     <a-alert v-if="error" type="error" show-icon :message="error" style="margin-bottom: 1rem" />
 
     <a-card title="Add society" style="margin-bottom: 1rem">
-      <a-form layout="vertical" @finish="createSociety">
+      <a-form layout="vertical" :model="form" @finish="createSociety">
         <a-row :gutter="16">
           <a-col :xs="24" :md="12">
-            <a-form-item label="Name" :rules="[{ required: true }]">
+            <a-form-item
+              label="Name"
+              name="name"
+              :rules="[{ required: true, message: 'Society name is required' }]"
+            >
               <a-input v-model:value="form.name" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :md="12">
-            <a-form-item label="Address">
+            <a-form-item label="Address" name="address_line">
               <a-input v-model:value="form.address_line" />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="Service weekdays (exactly 3)">
+        <a-form-item label="Service weekdays (exactly 3)" name="service_weekdays">
           <a-checkbox-group v-model:value="form.service_weekdays" :options="weekdayOptions" />
         </a-form-item>
-        <a-form-item label="Serviceable (live)">
+        <a-form-item label="Serviceable (live)" name="is_serviceable">
           <a-switch v-model:checked="form.is_serviceable" />
         </a-form-item>
         <a-button type="primary" html-type="submit" :loading="saving">Create society</a-button>
