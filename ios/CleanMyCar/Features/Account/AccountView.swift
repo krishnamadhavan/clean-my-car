@@ -14,9 +14,9 @@ struct AccountView: View {
                 }
                 Section {
                     Button(role: .destructive) {
-                        appState.isAuthenticated = false
+                        Task { await appState.signOut() }
                     } label: {
-                        Label("Sign out (scaffold)", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
