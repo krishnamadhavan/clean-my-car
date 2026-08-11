@@ -12,7 +12,6 @@ struct WelcomeView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     header
-                    statusCard
                     phoneCard
                 }
                 .padding(24)
@@ -47,35 +46,6 @@ struct WelcomeView: View {
             .multilineTextAlignment(.center)
         }
         .padding(.top, 12)
-    }
-
-    private var statusCard: some View {
-        AppCard {
-            Label("Local backend", systemImage: "server.rack")
-                .font(.headline)
-            Text(AppConfig.apiBaseURL.absoluteString)
-                .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
-            HStack {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 10, height: 10)
-                Text(appState.apiStatus.label)
-                    .font(.subheadline.weight(.medium))
-            }
-            if let err = appState.lastError {
-                Text(err)
-                    .font(.caption)
-                    .foregroundStyle(BrandColor.accent)
-            }
-            Button {
-                Task { await appState.checkAPIHealth() }
-            } label: {
-                Label("Recheck API", systemImage: "arrow.clockwise")
-            }
-            .buttonStyle(.bordered)
-        }
     }
 
     private var phoneCard: some View {
@@ -126,15 +96,6 @@ struct WelcomeView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(isSending || !IndianPhone.isValidBody(phoneDigits))
-        }
-    }
-
-    private var statusColor: Color {
-        switch appState.apiStatus {
-        case .healthy: return .green
-        case .checking: return BrandColor.secondary
-        case .unhealthy, .unreachable: return BrandColor.accent
-        case .unknown: return .gray
         }
     }
 

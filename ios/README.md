@@ -61,13 +61,7 @@ open ios/CleanMyCar.xcodeproj
 2. Pick a simulator, e.g. **iPhone 16** (or any iOS 17+ device).
 3. Press **Run** (▶) or `⌘R`.
 
-The welcome screen calls:
-
-`GET http://127.0.0.1:8000/api/v1/health`
-
-You should see **API reachable** if Docker is up.
-
-Enter a 10-digit Indian mobile number and tap **Send OTP**. In local/dev the API returns `debug_otp`; the verify screen shows it under **DEBUG** so you can sign in without SMS.
+Enter a 10-digit Indian mobile number and tap **Send OTP**. If the API is down, that request fails with an error on the form. In local/dev the API returns `debug_otp`; the verify screen shows it under **DEBUG** so you can sign in without SMS.
 
 ### CLI (optional)
 
@@ -175,8 +169,8 @@ Align with [`docs/PRD.md`](../docs/PRD.md) and [`docs/API_INVENTORY.md`](../docs
 
 | Symptom | Fix |
 |---------|-----|
-| **API unreachable** on Simulator | `make up-backend` / `make health`; confirm URL is `127.0.0.1:8000` |
-| **API unreachable** on device | Use Mac LAN IP in `API_BASE_URL`; same Wi‑Fi; check firewall |
+| **Send OTP fails** on Simulator | `make up-backend` / `make health`; confirm the app can reach `127.0.0.1:8000` |
+| **Send OTP fails** on device | Use Mac LAN IP in `API_BASE_URL`; same Wi‑Fi; check firewall |
 | Signing errors | Select a Team; change bundle ID if taken |
 | Blank App Icon | Expected in scaffold — add a 1024×1024 asset later |
 | Xcode asks to install platforms | Install the iOS Simulator runtime when prompted |

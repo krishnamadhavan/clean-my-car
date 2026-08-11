@@ -6,23 +6,12 @@ enum APIPath {
         return "\(AppConfig.apiPrefix)\(trimmed)"
     }
 
-    static let health = v1("/health")
-    static let ready = v1("/ready")
     static let otpRequest = v1("/auth/otp/request")
     static let otpVerify = v1("/auth/otp/verify")
     static let tokenRefresh = v1("/auth/token/refresh")
     static let logout = v1("/auth/logout")
     static let me = v1("/me")
     static let deactivate = v1("/me/deactivate")
-}
-
-struct HealthResponse: Decodable, Sendable {
-    let status: String
-}
-
-struct ReadyResponse: Decodable, Sendable {
-    let status: String
-    let database: String?
 }
 
 struct MessageResponse: Decodable, Sendable {

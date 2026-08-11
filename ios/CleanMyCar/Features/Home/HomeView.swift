@@ -16,25 +16,12 @@ struct HomeView: View {
                     }
                 }
 
-                Section("Status") {
-                    LabeledContent("API", value: appState.apiStatus.label)
-                    LabeledContent("Base URL", value: AppConfig.apiBaseURL.absoluteString)
-                }
-
                 Section("This month") {
                     Text(
                         "Wash progress (completed vs pending) will appear here after the subscription module is wired."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    Button {
-                        Task { await appState.checkAPIHealth() }
-                    } label: {
-                        Label("Refresh API health", systemImage: "arrow.clockwise")
-                    }
                 }
             }
             .navigationTitle("Home")

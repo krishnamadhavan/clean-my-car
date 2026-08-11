@@ -23,14 +23,6 @@ final class APIClient {
         self.urlSession = urlSession
     }
 
-    func health() async throws -> HealthResponse {
-        try await send(method: .get, path: APIPath.health)
-    }
-
-    func ready() async throws -> ReadyResponse {
-        try await send(method: .get, path: APIPath.ready)
-    }
-
     func requestOTP(phone: String) async throws -> OTPRequestResponse {
         try await send(
             method: .post,

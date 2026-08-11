@@ -11,8 +11,6 @@ final class AppState: ObservableObject {
 
     @Published private(set) var phase: Phase = .launching
     @Published private(set) var profile: UserProfile?
-    @Published var apiStatus: APIHealthStatus = .unknown
-    @Published var lastError: String?
 
     let apiClient: APIClient
     let sessionStore: SessionStore
@@ -30,7 +28,6 @@ final class AppState: ObservableObject {
     }
 
     func bootstrap() async {
-        await checkAPIHealth()
         guard sessionStore.hasSession else {
             phase = .signedOut
             return
@@ -42,18 +39,6 @@ final class AppState: ObservableObject {
             sessionStore.clear()
             profile = nil
             phase = .signedOut
-        }
-    }
-
-    func checkAPIHealth() async {
-        apiStatus = .checking
-        lastError = nil
-        do {
-            let health = try await apiClient.health()
-            apiStatus = health.status.lowercased() == "ok" ? .healthy : .unhealthy
-        } catch {
-            apiStatus = .unreachable
-            lastError = error.localizedDescription
         }
     }
 
@@ -74,7 +59,7 @@ final class AppState: ObservableObject {
         do {
             profile = try await apiClient.fetchMe()
         } catch {
-            lastError = error.localizedDescription
+            // Pull-to-refresh stays silent; the next module can surface this.
         }
     }
 
@@ -109,23 +94,5 @@ final class AppState: ObservableObject {
         sessionStore.clear()
         profile = nil
         phase = .signedOut
-    }
-}
-
-enum APIHealthStatus: String {
-    case unknown
-    case checking
-    case healthy
-    case unhealthy
-    case unreachable
-
-    var label: String {
-        switch self {
-        case .unknown: return "Not checked"
-        case .checking: return "Checking…"
-        case .healthy: return "API reachable"
-        case .unhealthy: return "API unhealthy"
-        case .unreachable: return "API unreachable"
-        }
     }
 }
