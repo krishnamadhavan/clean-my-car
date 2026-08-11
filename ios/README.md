@@ -9,7 +9,7 @@ Native **SwiftUI** client for apartment residents (phone OTP, eligibility, vehic
 | Language | Swift 5 / SwiftUI |
 | API | Consumer FastAPI at `/api/v1/*` |
 
-This is a **scaffold**: welcome screen, API health check, placeholder Home / Account tabs. Full OTP and product flows come next.
+Consumer modules **Auth** (phone OTP) and **Profile** (`/me`) are wired. Location, vehicle, quote, and subscription come next.
 
 ---
 
@@ -61,13 +61,7 @@ open ios/CleanMyCar.xcodeproj
 2. Pick a simulator, e.g. **iPhone 16** (or any iOS 17+ device).
 3. Press **Run** (▶) or `⌘R`.
 
-The welcome screen calls:
-
-`GET http://127.0.0.1:8000/api/v1/health`
-
-You should see **API reachable** if Docker is up.
-
-Tap **Continue (scaffold)** to enter the placeholder Home / Account tabs (no real OTP yet).
+Enter a 10-digit Indian mobile number and tap **Send OTP**. If the API is down, that request fails with an error on the form. In local/dev the API returns `debug_otp`; the verify screen shows it under **DEBUG** so you can sign in without SMS.
 
 ### CLI (optional)
 
@@ -119,12 +113,13 @@ ios/
     ├── App/                   # @main, RootView, tabs, AppState
     ├── Core/
     │   ├── Config/            # AppConfig (API base URL)
-    │   ├── Networking/        # APIClient + health/ready
+    │   ├── Networking/        # APIClient, errors, DTOs
+    │   ├── Session/           # Keychain tokens + Indian phone helpers
     │   └── Theme/             # Brand colors
     ├── Features/
-    │   ├── Auth/              # Welcome (OTP next)
+    │   ├── Auth/              # Welcome + OTP verify
     │   ├── Home/              # Dashboard placeholder
-    │   └── Account/           # Account placeholder
+    │   └── Account/           # Profile, edit, logout, deactivate/delete
     └── Resources/
         └── Assets.xcassets
 ```
@@ -143,13 +138,28 @@ ios/
 
 ---
 
-## 7. Next modules (suggested order)
+## 7. Auth & profile
 
-1. **Auth** — OTP request/verify, store access + refresh tokens
-2. **Location** — list cities/societies, waitlist
-3. **Vehicle** — makes/models, plate, parking
-4. **Pricing** — quote preview
-5. **Home dashboard** — subscription + monthly wash counts
+| Flow | API |
+|------|-----|
+| Send OTP | `POST /api/v1/auth/otp/request` |
+| Verify OTP | `POST /api/v1/auth/otp/verify` |
+| Restore session | `GET /api/v1/me` (refresh on 401) |
+| Edit name/email | `PATCH /api/v1/me` |
+| Sign out | `POST /api/v1/auth/logout` |
+| Deactivate | `POST /api/v1/me/deactivate` |
+| Delete | `DELETE /api/v1/me` |
+
+Access + refresh tokens live in the Keychain (`com.cleanmycar.app.tokens`). A 401 on an authenticated call rotates the refresh token once and retries. A failed refresh signs the user out.
+
+Local/dev OTP: the verify screen shows `debug_otp` in **DEBUG** builds only (the API includes it outside production).
+
+### Next modules (suggested order)
+
+1. **Location** — list cities/societies, waitlist
+2. **Vehicle** — makes/models, plate, parking
+3. **Pricing** — quote preview
+4. **Home dashboard** — subscription + monthly wash counts
 
 Align with [`docs/PRD.md`](../docs/PRD.md) and [`docs/API_INVENTORY.md`](../docs/API_INVENTORY.md).
 
@@ -159,8 +169,8 @@ Align with [`docs/PRD.md`](../docs/PRD.md) and [`docs/API_INVENTORY.md`](../docs
 
 | Symptom | Fix |
 |---------|-----|
-| **API unreachable** on Simulator | `make up-backend` / `make health`; confirm URL is `127.0.0.1:8000` |
-| **API unreachable** on device | Use Mac LAN IP in `API_BASE_URL`; same Wi‑Fi; check firewall |
+| **Send OTP fails** on Simulator | `make up-backend` / `make health`; confirm the app can reach `127.0.0.1:8000` |
+| **Send OTP fails** on device | Use Mac LAN IP in `API_BASE_URL`; same Wi‑Fi; check firewall |
 | Signing errors | Select a Team; change bundle ID if taken |
 | Blank App Icon | Expected in scaffold — add a 1024×1024 asset later |
 | Xcode asks to install platforms | Install the iOS Simulator runtime when prompted |
