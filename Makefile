@@ -265,6 +265,33 @@ ops-ui-shell: ## Open a shell in the Ops UI container
 	$(COMPOSE_FULL) exec $(OPS_UI_SERVICE) /bin/sh
 
 # ---------------------------------------------------------------------------
+# iOS (SwiftUI consumer app under ios/)
+# ---------------------------------------------------------------------------
+
+IOS_DIR := ios
+IOS_PROJECT := $(IOS_DIR)/CleanMyCar.xcodeproj
+IOS_SCHEME := CleanMyCar
+# Override: make ios-build IOS_DEST='platform=iOS Simulator,name=iPhone 17 Pro'
+IOS_DEST ?= platform=iOS Simulator,name=iPhone 17
+
+.PHONY: ios-open
+ios-open: ## Open CleanMyCar.xcodeproj in Xcode
+	open "$(IOS_PROJECT)"
+
+.PHONY: ios-build
+ios-build: ## Build iOS app for the Simulator (requires Xcode)
+	xcodebuild \
+		-project "$(IOS_PROJECT)" \
+		-scheme "$(IOS_SCHEME)" \
+		-destination '$(IOS_DEST)' \
+		-configuration Debug \
+		build
+
+.PHONY: ios-simulators
+ios-simulators: ## List available iOS Simulators
+	xcrun simctl list devices available
+
+# ---------------------------------------------------------------------------
 # Git helpers (conventional commits)
 # ---------------------------------------------------------------------------
 

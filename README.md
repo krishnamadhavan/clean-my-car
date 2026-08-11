@@ -6,7 +6,7 @@ Monorepo for the **Clean My Car** apartment car-cleaning subscription product.
 |------|--------|-------------|
 | `backend/` | Active | FastAPI + PostgreSQL API |
 | `ops-ui/` | Active | Nuxt ops portal (internal dashboard, Docker) |
-| `ios/` | Planned | Native iOS client |
+| `ios/` | Scaffold | Native SwiftUI consumer app |
 | `docs/` | Active | PRD and product docs |
 
 ## Prerequisites
@@ -43,11 +43,25 @@ make format        # ruff fix + format
 make lint          # ruff check
 make ops-ui-dev    # Ops UI (+ api/db via depends_on)
 make ops-ui-dev-host  # optional: Nuxt on host Node (needs make ops-ui-install)
+make ios-open      # open CleanMyCar.xcodeproj in Xcode
+make ios-build     # build iOS app for Simulator (requires Xcode)
 make pre-commit-install   # once: run hooks before every git commit
 make pre-commit    # ruff + file checks on all files
 make down          # stop stack
 make help          # all targets
 ```
+
+### iOS (consumer app)
+
+Native SwiftUI scaffold under `ios/`. Requires **Xcode 16+** on macOS.
+
+```bash
+make up-backend     # API for the app (Simulator → http://127.0.0.1:8000)
+make ios-open       # opens ios/CleanMyCar.xcodeproj
+# In Xcode: select an iPhone simulator → Run (⌘R)
+```
+
+Full steps (device, API URL overrides, troubleshooting): [`ios/README.md`](ios/README.md).
 
 ### Ops UI
 
@@ -74,7 +88,7 @@ clean-my-car/
 │   └── pyproject.toml
 ├── ops-ui/               # Nuxt ops portal (internal; Docker + optional host npm)
 ├── docs/                 # product requirements, design notes
-├── ios/                  # (future) native iOS app
+├── ios/                  # SwiftUI consumer app (scaffold)
 ├── docker-compose.yml    # local stack: api + db + ops-ui
 ├── Makefile              # developer commands
 ├── .env.example

@@ -4,9 +4,17 @@
 
 - Backend work lives under `backend/`.
 - Ops portal (Nuxt) lives under `ops-ui/` — included in `make up` as the `ops-ui` Docker service.
-- iOS will live under `ios/` (not scaffolded yet).
+- Consumer iOS app (SwiftUI) lives under `ios/` — open with `make ios-open` (see `ios/README.md`).
 - Use root `Makefile` and `docker-compose.yml` for local development (API, Postgres, Ops UI).
 - Do not commit secrets. Use `.env` (gitignored); start from `.env.example`.
+
+## Standing rules
+
+When the project owner states a **standing rule** (process, product, or engineering), record it in this section in the same change. Do not leave the rule only in chat.
+
+| Rule | Detail |
+|------|--------|
+| Record standing rules here | New process, product, or engineering rules stated during development belong in this table so they survive the conversation. |
 
 ### Database design / ER diagram (required)
 
