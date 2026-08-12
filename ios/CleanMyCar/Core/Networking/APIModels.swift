@@ -18,6 +18,7 @@ enum APIPath {
     static let waitlist = v1("/waitlist")
     static let meWaitlist = v1("/me/waitlist")
     static let vehicleMakes = v1("/vehicle-makes")
+    static let vehicleSizeTiers = v1("/vehicle-size-tiers")
     static let interiorOptions = v1("/interior-options")
     static let pricingQuote = v1("/pricing/quote")
 
@@ -310,6 +311,56 @@ struct VehiclePutBody: Encodable {
     let colour: String?
     let parkingSlot: String?
     let parkingTower: String?
+}
+
+/// PATCH body — only non-nil fields are sent (see `VehiclePatchBody.encode`).
+struct VehiclePatchBody: Encodable {
+    var modelId: UUID?
+    var nickname: String?
+    var plateNumber: String?
+    var colour: String?
+    var parkingSlot: String?
+    var parkingTower: String?
+    /// Fields to send as JSON null (clear on server).
+    var clearFields: Set<String> = []
+
+    enum CodingKeys: String, CodingKey {
+        case modelId, nickname, plateNumber, colour, parkingSlot, parkingTower
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if let modelId { try container.encode(modelId, forKey: .modelId) }
+        try encodeOptional(nickname, key: .nickname, into: &container)
+        try encodeOptional(plateNumber, key: .plateNumber, into: &container)
+        try encodeOptional(colour, key: .colour, into: &container)
+        try encodeOptional(parkingSlot, key: .parkingSlot, into: &container)
+        try encodeOptional(parkingTower, key: .parkingTower, into: &container)
+    }
+
+    private func encodeOptional(
+        _ value: String?,
+        key: CodingKeys,
+        into container: inout KeyedEncodingContainer<CodingKeys>
+    ) throws {
+        if clearFields.contains(key.stringValue) {
+            try container.encodeNil(forKey: key)
+        } else if let value {
+            try container.encode(value, forKey: key)
+        }
+    }
+}
+
+struct VehicleSizeTierInfo: Decodable, Sendable, Identifiable, Equatable {
+    let code: VehicleSizeTier
+    let label: String
+    let description: String
+
+    var id: String { code.rawValue }
+}
+
+struct VehicleSizeTierListResponse: Decodable, Sendable {
+    let items: [VehicleSizeTierInfo]
 }
 
 // MARK: - Pricing (Module 6)

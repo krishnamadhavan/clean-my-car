@@ -80,6 +80,15 @@ struct VehicleEditorView: View {
                     TextField("Tower / block", text: $parkingTower)
                 }
 
+                Section {
+                    NavigationLink {
+                        SizeTierGuideView()
+                            .environmentObject(appState)
+                    } label: {
+                        Label("What do size tiers mean?", systemImage: "ruler")
+                    }
+                }
+
                 if let errorMessage {
                     Section {
                         Text(errorMessage)

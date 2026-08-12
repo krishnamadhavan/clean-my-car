@@ -165,13 +165,19 @@ Local/dev OTP: the verify screen shows `debug_otp` in **DEBUG** builds only (the
 | **Plan** | creditcard | Live quote entry + sample billing until Modules 7–8 |
 | **Account** | person | Live profile APIs |
 
-### Integrated consumer APIs
+### Modules 3–5 (location, waitlist, vehicle)
 
-| Area | Endpoints used in app |
-|------|------------------------|
+| Module | Screens | APIs |
+|--------|---------|------|
+| **3 Location** | Account → Location; Home set society; society detail | LOC-01…05 |
+| **4 Waitlist** | Account → Waitlist; join from society picker | WAIT-01, WAIT-02 |
+| **5 Vehicle** | Account → Vehicle; editor; size guide; delete | VEH-01…07 (PATCH via editor PUT) |
+
+### Also integrated
+
+| Area | Endpoints |
+|------|-----------|
 | Auth / profile | OTP, tokens, `/me` |
-| Location | `GET /cities`, societies, `GET/PUT /me/location`, waitlist |
-| Vehicle | makes/models catalog, `GET/PUT /me/vehicle` |
 | Pricing | interior options, `POST /pricing/quote` |
 
 ### Next modules (suggested order)

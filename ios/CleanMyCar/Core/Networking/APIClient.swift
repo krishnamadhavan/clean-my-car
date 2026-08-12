@@ -196,12 +196,29 @@ final class APIClient {
         )
     }
 
+    func patchMyVehicle(_ body: VehiclePatchBody) async throws -> UserVehicle {
+        try await send(
+            method: .patch,
+            path: APIPath.meVehicle,
+            body: body,
+            authenticated: true
+        )
+    }
+
     func deleteMyVehicle() async throws {
         let _: MessageResponse = try await send(
             method: .delete,
             path: APIPath.meVehicle,
             authenticated: true
         )
+    }
+
+    func listVehicleSizeTiers() async throws -> [VehicleSizeTierInfo] {
+        let response: VehicleSizeTierListResponse = try await send(
+            method: .get,
+            path: APIPath.vehicleSizeTiers
+        )
+        return response.items
     }
 
     func listInteriorOptions() async throws -> [InteriorOption] {

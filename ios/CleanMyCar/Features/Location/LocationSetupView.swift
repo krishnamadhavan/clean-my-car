@@ -131,13 +131,15 @@ struct LocationSetupView: View {
             } else {
                 Section("Live societies") {
                     ForEach(societies) { society in
-                        Button {
-                            Task { await save(society: society) }
+                        NavigationLink {
+                            SocietyDetailView(societyId: society.id) { detail in
+                                await save(detail: detail)
+                            }
+                            .environmentObject(appState)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(society.name)
                                     .font(.body.weight(.medium))
-                                    .foregroundStyle(.primary)
                                 if let address = society.addressLine, !address.isEmpty {
                                     Text(address)
                                         .font(.caption)
@@ -218,15 +220,14 @@ struct LocationSetupView: View {
         }
     }
 
-    private func save(society: SocietySummary) async {
-        guard let city = selectedCity else { return }
+    private func save(detail: SocietyDetail) async {
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
             let location = try await appState.apiClient.setMyLocation(
-                cityId: city.id,
-                societyId: society.id
+                cityId: detail.city.id,
+                societyId: detail.id
             )
             onSaved?(location)
             dismiss()

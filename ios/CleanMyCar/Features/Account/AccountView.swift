@@ -12,6 +12,7 @@ struct AccountView: View {
         NavigationStack {
             List {
                 profileSection
+                modulesSection
                 statusSection
                 sessionSection
                 dangerSection
@@ -73,6 +74,29 @@ struct AccountView: View {
             } else {
                 Text("Loading profile…")
                     .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var modulesSection: some View {
+        Section("Service setup") {
+            NavigationLink {
+                LocationHomeView()
+                    .environmentObject(appState)
+            } label: {
+                Label("Location & society", systemImage: "building.2.fill")
+            }
+            NavigationLink {
+                VehicleHomeView()
+                    .environmentObject(appState)
+            } label: {
+                Label("Vehicle", systemImage: "car.fill")
+            }
+            NavigationLink {
+                WaitlistListView()
+                    .environmentObject(appState)
+            } label: {
+                Label("Waitlist", systemImage: "bell.fill")
             }
         }
     }
