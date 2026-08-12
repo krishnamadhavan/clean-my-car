@@ -1,66 +1,77 @@
 import SwiftUI
 
-/// Module 4 — list the signed-in user's waitlist entries (WAIT-02).
+/// Module 4 — at most one waitlist request per account (WAIT-02 list + update via WAIT-01).
 struct WaitlistListView: View {
     @EnvironmentObject private var appState: AppState
 
-    @State private var entries: [WaitlistEntry] = []
+    @State private var entry: WaitlistEntry?
     @State private var isLoading = true
     @State private var errorMessage: String?
-    @State private var showJoin = false
+    @State private var showCityPicker = false
     @State private var cities: [CitySummary] = []
-    @State private var joinCity: CitySummary?
+    @State private var editorCity: CitySummary?
+
+    private var hasEntry: Bool { entry != nil }
 
     var body: some View {
         List {
             if isLoading {
                 ProgressView("Loading waitlist…")
-            } else if entries.isEmpty {
-                ContentUnavailableView(
-                    "No waitlist entries",
-                    systemImage: "bell.slash",
-                    description: Text("If your society is not live yet, join the waitlist so ops can notify you.")
-                )
-            } else {
-                Section("Your entries") {
-                    ForEach(entries) { entry in
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(entry.societyName)
-                                    .font(.headline)
-                                Spacer()
-                                Text(entry.status.label)
-                                    .font(.caption.weight(.semibold))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(statusColor(entry.status).opacity(0.15))
-                                    .foregroundStyle(statusColor(entry.status))
-                                    .clipShape(Capsule())
-                            }
-                            if let city = entry.city {
-                                Text("\(city.name), \(city.state)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Text(entry.createdAt.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            if let notes = entry.notes, !notes.isEmpty {
-                                Text(notes)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+            } else if let entry {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(entry.societyName)
+                                .font(.title3.weight(.semibold))
+                            Spacer()
+                            Text(entry.status.label)
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(statusColor(entry.status).opacity(0.15))
+                                .foregroundStyle(statusColor(entry.status))
+                                .clipShape(Capsule())
                         }
-                        .padding(.vertical, 4)
+                        if let city = entry.city {
+                            Text("\(city.name), \(city.state)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("Updated \(entry.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if let notes = entry.notes, !notes.isEmpty {
+                            Text(notes)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Your waitlist request")
+                } footer: {
+                    Text(
+                        "Accounts keep a single waitlist request. Updating city or society replaces this entry — it does not create another one."
+                    )
                 }
+            } else {
+                ContentUnavailableView(
+                    "No waitlist request",
+                    systemImage: "bell.slash",
+                    description: Text(
+                        "If your society is not live yet, join the waitlist so ops can notify you. You can change the society later; only one request is stored."
+                    )
+                )
             }
 
             Section {
                 Button {
-                    Task { await prepareJoin() }
+                    Task { await prepareEditor() }
                 } label: {
-                    Label("Join waitlist for a city", systemImage: "bell.badge")
+                    Label(
+                        hasEntry ? "Update city or society" : "Join waitlist",
+                        systemImage: hasEntry ? "pencil" : "bell.badge"
+                    )
                 }
             }
 
@@ -75,20 +86,28 @@ struct WaitlistListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }
         .task { await load() }
-        .sheet(item: $joinCity) { city in
-            WaitlistJoinView(city: city) {
-                joinCity = nil
+        .sheet(item: $editorCity) { city in
+            WaitlistJoinView(city: city, existing: entry) {
+                editorCity = nil
                 Task { await load() }
             }
             .environmentObject(appState)
         }
-        .confirmationDialog("Choose a city", isPresented: $showJoin, titleVisibility: .visible) {
+        .confirmationDialog(
+            hasEntry ? "Update for which city?" : "Choose a city",
+            isPresented: $showCityPicker,
+            titleVisibility: .visible
+        ) {
             ForEach(cities) { city in
                 Button("\(city.name), \(city.state)") {
-                    joinCity = city
+                    editorCity = city
                 }
             }
             Button("Cancel", role: .cancel) {}
+        } message: {
+            if hasEntry {
+                Text("Your existing request will be replaced with the new city and society name.")
+            }
         }
     }
 
@@ -107,21 +126,29 @@ struct WaitlistListView: View {
         defer { isLoading = false }
         do {
             let response = try await appState.apiClient.listMyWaitlist()
-            entries = response.items.sorted { $0.createdAt > $1.createdAt }
+            entry = response.items.first
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    private func prepareJoin() async {
+    private func prepareEditor() async {
         errorMessage = nil
         do {
             cities = try await appState.apiClient.listCities()
                 .sorted { $0.displayOrder < $1.displayOrder }
             if cities.isEmpty {
                 errorMessage = "No active cities yet."
+                return
+            }
+            // If editing and we already know the city, open the form directly.
+            if let entry,
+               let city = cities.first(where: { $0.id == entry.cityId })
+                ?? entry.city
+            {
+                editorCity = city
             } else {
-                showJoin = true
+                showCityPicker = true
             }
         } catch {
             errorMessage = error.localizedDescription

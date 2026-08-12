@@ -16,6 +16,7 @@ struct LocationSetupView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var showWaitlist = false
+    @State private var existingWaitlist: WaitlistEntry?
 
     var body: some View {
         NavigationStack {
@@ -45,11 +46,13 @@ struct LocationSetupView: View {
             }
             .task {
                 await loadCities()
+                await loadExistingWaitlist()
             }
             .sheet(isPresented: $showWaitlist) {
                 if let city = selectedCity {
-                    WaitlistJoinView(city: city) {
+                    WaitlistJoinView(city: city, existing: existingWaitlist) {
                         showWaitlist = false
+                        Task { await loadExistingWaitlist() }
                     }
                     .environmentObject(appState)
                 }
@@ -125,7 +128,10 @@ struct LocationSetupView: View {
                     Button {
                         showWaitlist = true
                     } label: {
-                        Label("Join waitlist", systemImage: "bell.badge")
+                        Label(
+                            existingWaitlist == nil ? "Join waitlist" : "Update waitlist request",
+                            systemImage: existingWaitlist == nil ? "bell.badge" : "pencil"
+                        )
                     }
                 }
             } else {
@@ -161,7 +167,17 @@ struct LocationSetupView: View {
                     Button {
                         showWaitlist = true
                     } label: {
-                        Label("Can’t find your society?", systemImage: "bell.badge")
+                        Label(
+                            existingWaitlist == nil
+                                ? "Can’t find your society? Join waitlist"
+                                : "Update your waitlist for a different society",
+                            systemImage: existingWaitlist == nil ? "bell.badge" : "pencil"
+                        )
+                    }
+                    if let existingWaitlist {
+                        Text("You already requested “\(existingWaitlist.societyName)”. Saving a new name replaces that single request.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -198,6 +214,16 @@ struct LocationSetupView: View {
                 .sorted { $0.displayOrder < $1.displayOrder }
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadExistingWaitlist() async {
+        do {
+            let response = try await appState.apiClient.listMyWaitlist()
+            existingWaitlist = response.items.first
+        } catch {
+            // Non-blocking; join form still works as create.
+            existingWaitlist = nil
         }
     }
 
