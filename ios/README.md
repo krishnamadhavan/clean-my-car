@@ -118,7 +118,9 @@ ios/
     │   └── Theme/             # Brand colors
     ├── Features/
     │   ├── Auth/              # Welcome + OTP verify
-    │   ├── Home/              # Dashboard placeholder
+    │   ├── Home/              # Dashboard (live profile/vehicle/location; sample wash counts)
+    │   ├── Schedule/          # Upcoming visits (sample until WASH-04)
+    │   ├── Plan/              # Plan & billing preview (until SUB/PAY modules)
     │   └── Account/           # Profile, edit, logout, deactivate/delete
     └── Resources/
         └── Assets.xcassets
@@ -154,12 +156,21 @@ Access + refresh tokens live in the Keychain (`com.cleanmycar.app.tokens`). A 40
 
 Local/dev OTP: the verify screen shows `debug_otp` in **DEBUG** builds only (the API includes it outside production).
 
+### Dashboard & tabs
+
+| Tab | Icon | Data |
+|-----|------|------|
+| **Home** | house | Greeting + vehicle (`GET /me/vehicle`) + location (`GET /me/location`); wash progress / next service / plan use **sample** data until `GET /me/dashboard` |
+| **Schedule** | calendar | Sample upcoming visits (WASH-04 later) |
+| **Plan** | creditcard | Sample plan & billing (Modules 7–8 later) |
+| **Account** | person | Live profile APIs |
+
 ### Next modules (suggested order)
 
-1. **Location** — list cities/societies, waitlist
-2. **Vehicle** — makes/models, plate, parking
+1. **Location** — list cities/societies, waitlist (eligibility onboarding)
+2. **Vehicle** — register make/model from catalog
 3. **Pricing** — quote preview
-4. **Home dashboard** — subscription + monthly wash counts
+4. **Subscription + washes** — replace Home sample counts with live dashboard
 
 Align with [`docs/PRD.md`](../docs/PRD.md) and [`docs/API_INVENTORY.md`](../docs/API_INVENTORY.md).
 

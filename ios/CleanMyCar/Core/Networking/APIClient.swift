@@ -90,6 +90,23 @@ final class APIClient {
         )
     }
 
+    func fetchMyVehicle() async throws -> UserVehicle? {
+        do {
+            return try await send(method: .get, path: APIPath.meVehicle, authenticated: true)
+        } catch let error as APIError {
+            if case let .server(status, code, _) = error,
+               status == 404 || code == "vehicle_not_found" || code == "not_found"
+            {
+                return nil
+            }
+            throw error
+        }
+    }
+
+    func fetchMyLocation() async throws -> UserLocation {
+        try await send(method: .get, path: APIPath.meLocation, authenticated: true)
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"
