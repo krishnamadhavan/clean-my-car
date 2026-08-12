@@ -1,23 +1,34 @@
 import SwiftUI
 
 /// Join or **update** the single waitlist request (one per account; re-submit replaces it).
+/// City and society are both editable on this form.
 struct WaitlistJoinView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
-    let city: CitySummary
+    /// Preferred starting city (e.g. from society search). User can change it.
+    var initialCity: CitySummary?
     /// When set, form is an edit of the existing one-per-user waitlist row.
     var existing: WaitlistEntry?
     var onJoined: (() -> Void)?
 
+    @State private var cities: [CitySummary] = []
+    @State private var selectedCity: CitySummary?
     @State private var societyName = ""
     @State private var notes = ""
+    @State private var isLoadingCities = true
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var didSucceed = false
     @State private var savedEntry: WaitlistEntry?
 
     private var isUpdate: Bool { existing != nil }
+
+    private var canSubmit: Bool {
+        selectedCity != nil
+            && !societyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !isSubmitting
+    }
 
     var body: some View {
         NavigationStack {
@@ -26,7 +37,7 @@ struct WaitlistJoinView: View {
                     Section {
                         Label {
                             Text(
-                                "You already have one waitlist request. Saving will replace it with this city and society — not add a second entry."
+                                "You already have one waitlist request. Saving will replace it with the city and society below — not add a second entry."
                             )
                         } icon: {
                             Image(systemName: "info.circle.fill")
@@ -37,7 +48,20 @@ struct WaitlistJoinView: View {
                 }
 
                 Section {
-                    LabeledContent("City", value: "\(city.name), \(city.state)")
+                    if isLoadingCities {
+                        ProgressView("Loading cities…")
+                    } else if cities.isEmpty {
+                        Text("No active cities available.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Picker("City", selection: $selectedCity) {
+                            Text("Select city").tag(Optional<CitySummary>.none)
+                            ForEach(cities) { city in
+                                Text("\(city.name), \(city.state)").tag(Optional(city))
+                            }
+                        }
+                    }
+
                     TextField("Society / apartment name", text: $societyName)
                         .textInputAutocapitalization(.words)
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
@@ -47,17 +71,14 @@ struct WaitlistJoinView: View {
                 } footer: {
                     Text(
                         isUpdate
-                            ? "Ops will see the updated building name. Your account phone number stays the same."
-                            : "We’ll use your account phone number. You can only have one open waitlist request; changing it later updates the same entry."
+                            ? "You can change both city and building. Ops will see the updated request. Your account phone number stays the same."
+                            : "We’ll use your account phone number. You can only have one open waitlist request; changing city or society later updates the same entry."
                     )
                 }
 
                 if let existing, !didSucceed {
                     Section("Currently on file") {
-                        LabeledContent(
-                            "Society",
-                            value: existing.societyName
-                        )
+                        LabeledContent("Society", value: existing.societyName)
                         if let existingCity = existing.city {
                             LabeledContent(
                                 "City",
@@ -112,24 +133,53 @@ struct WaitlistJoinView: View {
                         Button(isUpdate ? "Save changes" : "Submit") {
                             Task { await submit() }
                         }
-                        .disabled(societyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(!canSubmit)
                     }
                 }
             }
-            .onAppear {
-                prefillFromExisting()
+            .task {
+                await loadCitiesAndPrefill()
             }
         }
     }
 
-    private func prefillFromExisting() {
-        guard let existing else { return }
-        // Prefer the city the user just picked; still prefill society/notes from the open request.
-        societyName = existing.societyName
-        notes = existing.notes ?? ""
+    private func loadCitiesAndPrefill() async {
+        isLoadingCities = true
+        errorMessage = nil
+        defer { isLoadingCities = false }
+        do {
+            cities = try await appState.apiClient.listCities()
+                .sorted { $0.displayOrder < $1.displayOrder }
+        } catch {
+            errorMessage = error.localizedDescription
+            return
+        }
+
+        if let existing {
+            societyName = existing.societyName
+            notes = existing.notes ?? ""
+        }
+
+        // Prefer: initialCity (context) → existing entry city → first city
+        if let initialCity,
+           let match = cities.first(where: { $0.id == initialCity.id })
+        {
+            selectedCity = match
+        } else if let existing,
+                  let match = cities.first(where: { $0.id == existing.cityId })
+                  ?? existing.city.flatMap({ c in cities.first(where: { $0.id == c.id }) })
+        {
+            selectedCity = match
+        } else if selectedCity == nil {
+            selectedCity = cities.first
+        }
     }
 
     private func submit() async {
+        guard let selectedCity else {
+            errorMessage = "Choose a city."
+            return
+        }
         let name = societyName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         isSubmitting = true
@@ -137,7 +187,7 @@ struct WaitlistJoinView: View {
         defer { isSubmitting = false }
         do {
             let entry = try await appState.apiClient.joinWaitlist(
-                cityId: city.id,
+                cityId: selectedCity.id,
                 societyName: name,
                 notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
             )
@@ -158,7 +208,7 @@ private extension String {
 
 #Preview("Join") {
     WaitlistJoinView(
-        city: CitySummary(
+        initialCity: CitySummary(
             id: UUID(),
             name: "Bengaluru",
             state: "Karnataka",
@@ -170,12 +220,6 @@ private extension String {
 
 #Preview("Update") {
     WaitlistJoinView(
-        city: CitySummary(
-            id: UUID(),
-            name: "Bengaluru",
-            state: "Karnataka",
-            displayOrder: 1
-        ),
         existing: WaitlistEntry(
             id: UUID(),
             cityId: UUID(),

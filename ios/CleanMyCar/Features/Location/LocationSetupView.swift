@@ -49,13 +49,14 @@ struct LocationSetupView: View {
                 await loadExistingWaitlist()
             }
             .sheet(isPresented: $showWaitlist) {
-                if let city = selectedCity {
-                    WaitlistJoinView(city: city, existing: existingWaitlist) {
-                        showWaitlist = false
-                        Task { await loadExistingWaitlist() }
-                    }
-                    .environmentObject(appState)
+                WaitlistJoinView(
+                    initialCity: selectedCity,
+                    existing: existingWaitlist
+                ) {
+                    showWaitlist = false
+                    Task { await loadExistingWaitlist() }
                 }
+                .environmentObject(appState)
             }
         }
     }

@@ -7,9 +7,7 @@ struct WaitlistListView: View {
     @State private var entry: WaitlistEntry?
     @State private var isLoading = true
     @State private var errorMessage: String?
-    @State private var showCityPicker = false
-    @State private var cities: [CitySummary] = []
-    @State private var editorCity: CitySummary?
+    @State private var showEditor = false
 
     private var hasEntry: Bool { entry != nil }
 
@@ -51,7 +49,7 @@ struct WaitlistListView: View {
                     Text("Your waitlist request")
                 } footer: {
                     Text(
-                        "Accounts keep a single waitlist request. Updating city or society replaces this entry — it does not create another one."
+                        "Accounts keep a single waitlist request. Changing city or society replaces this entry — it does not create another one."
                     )
                 }
             } else {
@@ -59,17 +57,17 @@ struct WaitlistListView: View {
                     "No waitlist request",
                     systemImage: "bell.slash",
                     description: Text(
-                        "If your society is not live yet, join the waitlist so ops can notify you. You can change the society later; only one request is stored."
+                        "If your society is not live yet, join the waitlist so ops can notify you. You can change city and society later; only one request is stored."
                     )
                 )
             }
 
             Section {
                 Button {
-                    Task { await prepareEditor() }
+                    showEditor = true
                 } label: {
                     Label(
-                        hasEntry ? "Update city or society" : "Join waitlist",
+                        hasEntry ? "Edit request" : "Join waitlist",
                         systemImage: hasEntry ? "pencil" : "bell.badge"
                     )
                 }
@@ -86,28 +84,15 @@ struct WaitlistListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }
         .task { await load() }
-        .sheet(item: $editorCity) { city in
-            WaitlistJoinView(city: city, existing: entry) {
-                editorCity = nil
+        .sheet(isPresented: $showEditor) {
+            WaitlistJoinView(
+                initialCity: entry?.city,
+                existing: entry
+            ) {
+                showEditor = false
                 Task { await load() }
             }
             .environmentObject(appState)
-        }
-        .confirmationDialog(
-            hasEntry ? "Update for which city?" : "Choose a city",
-            isPresented: $showCityPicker,
-            titleVisibility: .visible
-        ) {
-            ForEach(cities) { city in
-                Button("\(city.name), \(city.state)") {
-                    editorCity = city
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            if hasEntry {
-                Text("Your existing request will be replaced with the new city and society name.")
-            }
         }
     }
 
@@ -127,29 +112,6 @@ struct WaitlistListView: View {
         do {
             let response = try await appState.apiClient.listMyWaitlist()
             entry = response.items.first
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    private func prepareEditor() async {
-        errorMessage = nil
-        do {
-            cities = try await appState.apiClient.listCities()
-                .sorted { $0.displayOrder < $1.displayOrder }
-            if cities.isEmpty {
-                errorMessage = "No active cities yet."
-                return
-            }
-            // If editing and we already know the city, open the form directly.
-            if let entry,
-               let city = cities.first(where: { $0.id == entry.cityId })
-                ?? entry.city
-            {
-                editorCity = city
-            } else {
-                showCityPicker = true
-            }
         } catch {
             errorMessage = error.localizedDescription
         }
