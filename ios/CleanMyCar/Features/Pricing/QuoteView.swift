@@ -17,25 +17,48 @@ struct QuoteView: View {
     @State private var isStarting = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    /// Ignores stale quote responses when the user changes package or taps Calculate again.
+    @State private var quoteRequestID = 0
 
     private var canQuote: Bool {
         location?.city != nil && vehicle != nil
     }
 
+    private var calculateDisabled: Bool {
+        !canQuote || isQuoting || isLoadingOptions || isStarting
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                prerequisitesSection
-                if canQuote {
-                    packageSection
-                    if let quote {
-                        quoteSection(quote)
-                    }
-                }
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
                             .foregroundStyle(BrandColor.accent)
+                    }
+                }
+
+                prerequisitesSection
+
+                if canQuote {
+                    packageSection
+                    calculateSection
+                    if isQuoting, quote == nil {
+                        Section {
+                            HStack {
+                                ProgressView()
+                                Text("Calculating quote…")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    if let quote {
+                        quoteSection(quote)
+                    }
+                } else {
+                    Section {
+                        Text("Set a serviceable society and vehicle on Home, then calculate a live quote.")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -52,7 +75,7 @@ struct QuoteView: View {
                         Button("Calculate") {
                             Task { await loadQuote() }
                         }
-                        .disabled(!canQuote)
+                        .disabled(calculateDisabled)
                     }
                 }
             }
@@ -100,6 +123,7 @@ struct QuoteView: View {
                     Text("2× / month").tag(2)
                     Text("4× / month").tag(4)
                 }
+                .disabled(isQuoting || isStarting)
                 .onChange(of: interiorFrequency) { _, _ in
                     Task { await loadQuote() }
                 }
@@ -109,6 +133,7 @@ struct QuoteView: View {
                         Text(option.label).tag(option.frequency)
                     }
                 }
+                .disabled(isQuoting || isStarting)
                 .onChange(of: interiorFrequency) { _, _ in
                     Task { await loadQuote() }
                 }
@@ -118,6 +143,33 @@ struct QuoteView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
+        }
+    }
+
+    private var calculateSection: some View {
+        Section {
+            Button {
+                Task { await loadQuote() }
+            } label: {
+                if isQuoting {
+                    HStack {
+                        ProgressView()
+                        Text("Calculating…")
+                    }
+                    .frame(maxWidth: .infinity)
+                } else {
+                    Text(quote == nil ? "Calculate price" : "Recalculate")
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(calculateDisabled)
+
+            if !canQuote {
+                Text("City and vehicle are required.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -201,11 +253,12 @@ struct QuoteView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isStarting || !canQuote)
+                .disabled(isStarting || !canQuote || isQuoting)
             }
         }
     }
 
+    @MainActor
     private func startAndPay() async {
         isStarting = true
         errorMessage = nil
@@ -229,36 +282,53 @@ struct QuoteView: View {
         }
     }
 
+    @MainActor
     private func loadOptions() async {
         isLoadingOptions = true
         defer { isLoadingOptions = false }
         do {
             interiorOptions = try await appState.apiClient.listInteriorOptions()
             if let first = interiorOptions.first {
-                interiorFrequency = first.frequency
+                // Avoid an extra quote round-trip when default is already correct.
+                if interiorFrequency != first.frequency {
+                    interiorFrequency = first.frequency
+                }
             }
         } catch {
-            // Fall back to hard-coded frequencies in the picker.
-            errorMessage = nil
+            // Fall back to hard-coded frequencies in the picker; do not clear quote errors.
+            interiorOptions = []
         }
     }
 
+    @MainActor
     private func loadQuote() async {
         guard let cityId = location?.city?.id, let vehicle else {
             errorMessage = "City and vehicle are required for a quote."
+            quote = nil
             return
         }
+        quoteRequestID += 1
+        let requestID = quoteRequestID
         isQuoting = true
         errorMessage = nil
-        defer { isQuoting = false }
+        defer {
+            if requestID == quoteRequestID {
+                isQuoting = false
+            }
+        }
         do {
-            quote = try await appState.apiClient.createQuote(
+            let result = try await appState.apiClient.createQuote(
                 cityId: cityId,
                 sizeTier: vehicle.sizeTier,
                 interiorFrequency: interiorFrequency,
                 societyId: location?.society?.id
             )
+            guard requestID == quoteRequestID else { return }
+            quote = result
+        } catch is CancellationError {
+            // Sheet dismissed or superseded request.
         } catch {
+            guard requestID == quoteRequestID else { return }
             quote = nil
             errorMessage = error.localizedDescription
         }
