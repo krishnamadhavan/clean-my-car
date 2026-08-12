@@ -21,6 +21,20 @@ enum APIPath {
     static let vehicleSizeTiers = v1("/vehicle-size-tiers")
     static let interiorOptions = v1("/interior-options")
     static let pricingQuote = v1("/pricing/quote")
+    static let meSubscription = v1("/me/subscription")
+    static let meSubscriptionCancel = v1("/me/subscription/cancel")
+    static let meSubscriptionCancelUndo = v1("/me/subscription/cancel/undo")
+    static let mePaymentIntents = v1("/me/payments/intents")
+    static let mePayments = v1("/me/payments")
+    static let meBillingSummary = v1("/me/billing/summary")
+
+    static func mePaymentIntent(_ id: UUID) -> String {
+        v1("/me/payments/intents/\(id.uuidString)")
+    }
+
+    static func mePaymentIntentConfirm(_ id: UUID) -> String {
+        v1("/me/payments/intents/\(id.uuidString)/confirm")
+    }
 
     static func citySocieties(_ cityId: UUID) -> String {
         v1("/cities/\(cityId.uuidString)/societies")
@@ -453,6 +467,132 @@ struct QuoteResponse: Decodable, Sendable, Equatable {
     let serviceWeekdays: [Int]?
     let serviceWeekdayLabels: [String]?
     let proRateMethod: String
+}
+
+// MARK: - Subscription & payments (Modules 7–8)
+
+enum SubscriptionStatus: String, Decodable, Sendable {
+    case pendingPayment = "pending_payment"
+    case active
+    case cancelScheduled = "cancel_scheduled"
+    case paused
+    case expired
+    case inactive
+
+    var label: String {
+        switch self {
+        case .pendingPayment: return "Payment due"
+        case .active: return "Active"
+        case .cancelScheduled: return "Cancels end of month"
+        case .paused: return "Paused"
+        case .expired: return "Expired"
+        case .inactive: return "Inactive"
+        }
+    }
+}
+
+struct UserSubscription: Decodable, Sendable, Equatable, Identifiable {
+    let id: UUID
+    let status: SubscriptionStatus
+    let cityId: UUID
+    let societyId: UUID
+    let vehicleId: UUID?
+    let sizeTier: VehicleSizeTier
+    let interiorFrequency: Int
+    let monthlyAmountPaise: Int
+    let currency: String
+    let periodStart: Date
+    let periodEnd: Date
+    let cancelAt: Date?
+    let pausedFrom: Date?
+    let pausedUntil: Date?
+    let city: CitySummary?
+    let society: SocietySummary?
+    let createdAt: Date
+    let updatedAt: Date
+
+    var planLabel: String {
+        let interior: String
+        switch interiorFrequency {
+        case 0: interior = "Exterior only"
+        case 1: interior = "Interior 1×"
+        case 2: interior = "Interior 2×"
+        case 4: interior = "Interior 4×"
+        default: interior = "Interior \(interiorFrequency)×"
+        }
+        return "\(sizeTier.label) · \(interior)"
+    }
+}
+
+struct SubscriptionStartBody: Encodable {
+    let interiorFrequency: Int
+    let startDate: String?
+}
+
+struct SubscriptionStartResponse: Decodable, Sendable {
+    let subscription: UserSubscription
+    let paymentIntentId: UUID
+    let amountDueNowPaise: Int
+    let currency: String
+    let quote: QuoteResponse
+}
+
+enum PaymentStatus: String, Decodable, Sendable {
+    case pending
+    case succeeded
+    case failed
+    case cancelled
+}
+
+enum PaymentKind: String, Decodable, Sendable {
+    case subscriptionStart = "subscription_start"
+    case renewal
+    case adjustment
+}
+
+struct UserPayment: Decodable, Sendable, Identifiable, Equatable {
+    let id: UUID
+    let subscriptionId: UUID?
+    let amountPaise: Int
+    let currency: String
+    let status: PaymentStatus
+    let kind: PaymentKind
+    let periodStart: Date?
+    let periodEnd: Date?
+    let provider: String
+    let providerRef: String?
+    let failureReason: String?
+    let capturedAt: Date?
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct PaymentIntentCreateBody: Encodable {
+    let subscriptionId: UUID?
+}
+
+struct PaymentConfirmBody: Encodable {
+    let providerRef: String?
+}
+
+struct PaymentListResponse: Decodable, Sendable {
+    let items: [UserPayment]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct BillingSummary: Decodable, Sendable {
+    let hasSubscription: Bool
+    let subscriptionId: UUID?
+    let subscriptionStatus: String?
+    let amountDuePaise: Int
+    let currency: String
+    let periodStart: Date?
+    let periodEnd: Date?
+    let isOverdue: Bool
+    let openPaymentIntentId: UUID?
+    let message: String
 }
 
 // MARK: - Dashboard preview (until DASH-01 / WASH-* APIs exist)

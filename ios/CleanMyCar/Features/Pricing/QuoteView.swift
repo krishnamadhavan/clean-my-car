@@ -1,19 +1,22 @@
 import SwiftUI
 
-/// Live quote from `POST /pricing/quote` using the user’s city, vehicle size, and society.
+/// Live quote from `POST /pricing/quote`; can start subscription + pay (Modules 7–8).
 struct QuoteView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     let location: UserLocation?
     let vehicle: UserVehicle?
+    var onSubscribed: (() -> Void)?
 
     @State private var interiorOptions: [InteriorOption] = []
     @State private var interiorFrequency = 0
     @State private var quote: QuoteResponse?
     @State private var isLoadingOptions = true
     @State private var isQuoting = false
+    @State private var isStarting = false
     @State private var errorMessage: String?
+    @State private var successMessage: String?
 
     private var canQuote: Bool {
         location?.city != nil && vehicle != nil
@@ -179,12 +182,50 @@ struct QuoteView: View {
             }
 
             Section {
-                Text("Checkout / payment will connect when the subscription module ships.")
+                if let successMessage {
+                    Label(successMessage, systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+                Text("Dev checkout: starts the plan and confirms payment immediately (manual provider).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Start subscription") {}
-                    .disabled(true)
+                Button {
+                    Task { await startAndPay() }
+                } label: {
+                    if isStarting {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Subscribe & pay \(INRFormat.rupees(fromPaise: quote.amountDueNowPaise))")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(isStarting || !canQuote)
             }
+        }
+    }
+
+    private func startAndPay() async {
+        isStarting = true
+        errorMessage = nil
+        successMessage = nil
+        defer { isStarting = false }
+        do {
+            let started = try await appState.apiClient.startSubscription(
+                interiorFrequency: interiorFrequency
+            )
+            _ = try await appState.apiClient.confirmPaymentIntent(
+                started.paymentIntentId,
+                providerRef: "IOS-DEV-\(Int(Date().timeIntervalSince1970))"
+            )
+            await appState.refreshProfile()
+            successMessage = "Subscription active. You’re paid for this period."
+            onSubscribed?()
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
