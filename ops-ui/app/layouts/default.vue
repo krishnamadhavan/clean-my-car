@@ -71,7 +71,9 @@
 
 <script setup lang="ts">
 import {
+  CalendarOutlined,
   CarOutlined,
+  CreditCardOutlined,
   DashboardOutlined,
   DollarOutlined,
   EnvironmentOutlined,
@@ -102,6 +104,8 @@ const menuItems = computed<ItemType[]>(() => [
   { key: '/waitlist', icon: () => h(UnorderedListOutlined), label: 'Waitlist' },
   { key: '/vehicles', icon: () => h(CarOutlined), label: 'Vehicles' },
   { key: '/pricing', icon: () => h(DollarOutlined), label: 'Pricing' },
+  { key: '/subscriptions', icon: () => h(CalendarOutlined), label: 'Subscriptions' },
+  { key: '/payments', icon: () => h(CreditCardOutlined), label: 'Payments' },
 ])
 
 const selectedKeys = computed({
@@ -112,6 +116,8 @@ const selectedKeys = computed({
     if (path.startsWith('/waitlist')) return ['/waitlist']
     if (path.startsWith('/vehicles')) return ['/vehicles']
     if (path.startsWith('/pricing')) return ['/pricing']
+    if (path.startsWith('/subscriptions')) return ['/subscriptions']
+    if (path.startsWith('/payments')) return ['/payments']
     return ['/']
   },
   set: () => {},
@@ -124,6 +130,8 @@ const pageTitle = computed(() => {
   if (path.startsWith('/waitlist')) return 'Waitlist'
   if (path.startsWith('/vehicles')) return 'Vehicle catalog'
   if (path.startsWith('/pricing')) return 'Pricing'
+  if (path.startsWith('/subscriptions')) return 'Subscriptions'
+  if (path.startsWith('/payments')) return 'Payments'
   return 'Dashboard'
 })
 

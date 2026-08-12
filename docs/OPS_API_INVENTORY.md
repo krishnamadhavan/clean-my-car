@@ -92,7 +92,7 @@ What must exist before consumer APIs work end-to-end. **Seed today → Ops APIs 
 | Users / sessions | `users`, `refresh_tokens`, `otp_*` | Auth/profile — **user-owned**, not catalog | **1–2** (support only) |
 | User vehicle instance | `vehicles` | VEH-01–04 — **user-owned** | **5** (read/correct only if needed) |
 
-**Implementation status (codebase):** Ops Modules **1–6** (auth, users, location, waitlist, vehicle catalog, pricing) are implemented under `/api/v1/ops/*`. Consumer error e.g. `pricing_not_found` means that city still has no active ops-managed pricing row.
+**Implementation status (codebase):** Ops Modules **1–8** are implemented under `/api/v1/ops/*` (auth, users, location, waitlist, vehicle catalog, pricing, **subscriptions**, **payments**). Subscription/payment **domain tables** exist; consumer start/pay flows (iOS) still pending. Consumer error e.g. `pricing_not_found` means that city still has no active ops-managed pricing row.
 
 ---
 
@@ -235,7 +235,7 @@ What must exist before consumer APIs work end-to-end. **Seed today → Ops APIs 
 | OPS-SUB-03 | `POST /ops/subscriptions/{id}/cancel` | Admin cancel (policy) | C | — | S7 |
 | OPS-SUB-04 | `POST /ops/subscriptions/{id}/extend` | Rare goodwill extension | W | — | — |
 
-**v1 note:** No ops APIs until consumer subscription tables exist. **None required for modules 1–6 master data.**
+**Status:** OPS-SUB-01–03 implemented (list/detail/admin cancel). Consumer start/pay still pending.
 
 ---
 
@@ -243,11 +243,11 @@ What must exist before consumer APIs work end-to-end. **Seed today → Ops APIs 
 
 | ID | Method / path | Purpose | Priority | Master data | PRD |
 |----|---------------|---------|----------|-------------|-----|
-| OPS-PAY-01 | `GET /ops/payments` | Search payments / intents | S | payments (future) | P3 |
+| OPS-PAY-01 | `GET /ops/payments` | Search payments / intents | S | `payments` | P3 |
 | OPS-PAY-02 | `GET /ops/payments/{id}` | Detail + gateway refs | S | — | P3 |
 | OPS-PAY-03 | `POST /ops/payments/{id}/reconcile` | Manual mark captured (exceptions) | C | — | P4 |
 
-**v1 note:** No ops APIs for modules 1–6. Webhooks (consumer inventory Module 14) are server-to-server, not ops UI.
+**Status:** OPS-PAY-01–03 implemented. Consumer payment intents / gateway webhooks still pending.
 
 ---
 

@@ -1,7 +1,16 @@
-/** Shared TypeScript types for ops API responses (Modules 1–6). */
+/** Shared TypeScript types for ops API responses (Modules 1–8). */
 
 export type VehicleSizeTier = 'small' | 'medium' | 'large'
 export type WaitlistStatus = 'pending' | 'contacted' | 'converted' | 'closed'
+export type SubscriptionStatus =
+  | 'pending_payment'
+  | 'active'
+  | 'cancel_scheduled'
+  | 'paused'
+  | 'expired'
+  | 'inactive'
+export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled'
+export type PaymentKind = 'subscription_start' | 'renewal' | 'adjustment'
 
 export interface OpsOperator {
   id: string
@@ -177,4 +186,70 @@ export interface ApiErrorBody {
   code?: string
   message?: string
   detail?: unknown
+}
+
+export interface OpsSubscription {
+  id: string
+  user_id: string
+  user: {
+    id: string
+    phone: string
+    name: string | null
+    email: string | null
+    is_active: boolean
+  } | null
+  city_id: string
+  city: { id: string; name: string; state: string; display_order: number } | null
+  society_id: string
+  society: {
+    id: string
+    city_id: string
+    name: string
+    address_line: string | null
+    service_weekdays: number[]
+    service_weekday_labels: string[]
+    display_order: number
+  } | null
+  vehicle_id: string | null
+  size_tier: VehicleSizeTier
+  interior_frequency: number
+  status: SubscriptionStatus
+  monthly_amount_paise: number
+  currency: string
+  period_start: string
+  period_end: string
+  cancel_at: string | null
+  paused_from: string | null
+  paused_until: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OpsPayment {
+  id: string
+  user_id: string
+  user: {
+    id: string
+    phone: string
+    name: string | null
+    email: string | null
+    is_active: boolean
+  } | null
+  subscription_id: string | null
+  amount_paise: number
+  currency: string
+  status: PaymentStatus
+  kind: PaymentKind
+  period_start: string | null
+  period_end: string | null
+  provider: string
+  provider_ref: string | null
+  failure_reason: string | null
+  captured_at: string | null
+  reconciled_at: string | null
+  reconciled_by_operator_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
 }

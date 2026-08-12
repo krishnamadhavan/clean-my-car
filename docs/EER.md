@@ -38,6 +38,8 @@ Also refresh the short notes below if relationships change.
 | `city_interior_prices` | Interior add-on by frequency 0/1/2/4 (paise) |
 | `ops_operators` | Ops staff (email/password, roles) |
 | `ops_refresh_tokens` | Ops session refresh tokens (hashed) |
+| `subscriptions` | Calendar-month plans (Module 7); status + period + cancel_at |
+| `payments` | Payment intents / captures (Module 8); reconcile by ops |
 
 ## Relationships
 
@@ -56,6 +58,13 @@ Also refresh the short notes below if relationships change.
 | `city_size_prices.pricing_id` | `city_pricing` | `city_size_prices` | CASCADE |
 | `city_interior_prices.pricing_id` | `city_pricing` | `city_interior_prices` | CASCADE |
 | `ops_refresh_tokens.operator_id` | `ops_operators` | `ops_refresh_tokens` | CASCADE |
+| `subscriptions.user_id` | `users` | `subscriptions` | CASCADE |
+| `subscriptions.city_id` | `cities` | `subscriptions` | RESTRICT |
+| `subscriptions.society_id` | `societies` | `subscriptions` | RESTRICT |
+| `subscriptions.vehicle_id` | `vehicles` | `subscriptions` | SET NULL |
+| `payments.user_id` | `users` | `payments` | CASCADE |
+| `payments.subscription_id` | `subscriptions` | `payments` | SET NULL |
+| `payments.reconciled_by_operator_id` | `ops_operators` | `payments` | SET NULL |
 
 ## Alembic map
 
@@ -70,3 +79,4 @@ Also refresh the short notes below if relationships change.
 | `20260803_0007` | ops_operators, ops_refresh_tokens |
 | `20260807_0008` | cities.display_order unique index |
 | `20260807_0009` | vehicle_makes.display_order unique index |
+| `20260812_0010` | subscriptions, payments |

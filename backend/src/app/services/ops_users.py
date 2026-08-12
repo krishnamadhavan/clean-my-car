@@ -14,10 +14,18 @@ from app.core.phone import normalize_indian_phone
 from app.models.city import City
 from app.models.refresh_token import RefreshToken
 from app.models.society import Society
+from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.location import CityOut, SocietySummaryOut
 from app.schemas.ops_users import OpsUserDetail, OpsUserListOut, OpsUserSummary
+
+_ACTIVE_SUB_STATUSES = (
+    SubscriptionStatus.active,
+    SubscriptionStatus.cancel_scheduled,
+    SubscriptionStatus.paused,
+    SubscriptionStatus.pending_payment,
+)
 
 
 class OpsUsersService:
@@ -129,6 +137,17 @@ class OpsUsersService:
             )
         ).scalar_one_or_none() is not None
 
+        has_subscription = (
+            await self.session.execute(
+                select(Subscription.id)
+                .where(
+                    Subscription.user_id == user.id,
+                    Subscription.status.in_(_ACTIVE_SUB_STATUSES),
+                )
+                .limit(1)
+            )
+        ).scalar_one_or_none() is not None
+
         return OpsUserDetail(
             id=user.id,
             phone=user.phone,
@@ -143,7 +162,7 @@ class OpsUsersService:
             city=city_out,
             society=society_out,
             has_vehicle=has_vehicle,
-            has_subscription=False,
+            has_subscription=has_subscription,
         )
 
     async def _revoke_all_refresh_tokens(self, user: User) -> None:

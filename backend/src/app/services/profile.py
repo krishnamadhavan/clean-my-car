@@ -9,9 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppError, ForbiddenError
 from app.models.refresh_token import RefreshToken
+from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.user import MeOut, MeUpdate
+
+_ACTIVE_SUB_STATUSES = (
+    SubscriptionStatus.active,
+    SubscriptionStatus.cancel_scheduled,
+    SubscriptionStatus.paused,
+    SubscriptionStatus.pending_payment,
+)
 
 
 class ProfileService:
@@ -21,6 +29,7 @@ class ProfileService:
     async def build_me(self, user: User) -> MeOut:
         """Assemble /me payload including vehicle/subscription flags."""
         has_vehicle = await self._has_vehicle(user)
+        has_subscription = await self._has_subscription(user)
         return MeOut(
             id=user.id,
             phone=user.phone,
@@ -30,12 +39,23 @@ class ProfileService:
             created_at=user.created_at,
             deleted_at=user.deleted_at,
             has_vehicle=has_vehicle,
-            has_subscription=False,
+            has_subscription=has_subscription,
         )
 
     async def _has_vehicle(self, user: User) -> bool:
         result = await self.session.execute(
             select(Vehicle.id).where(Vehicle.user_id == user.id).limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _has_subscription(self, user: User) -> bool:
+        result = await self.session.execute(
+            select(Subscription.id)
+            .where(
+                Subscription.user_id == user.id,
+                Subscription.status.in_(_ACTIVE_SUB_STATUSES),
+            )
+            .limit(1)
         )
         return result.scalar_one_or_none() is not None
 
