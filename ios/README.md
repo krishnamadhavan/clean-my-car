@@ -160,17 +160,24 @@ Local/dev OTP: the verify screen shows `debug_otp` in **DEBUG** builds only (the
 
 | Tab | Icon | Data |
 |-----|------|------|
-| **Home** | house | Greeting + vehicle (`GET /me/vehicle`) + location (`GET /me/location`); wash progress / next service / plan use **sample** data until `GET /me/dashboard` |
+| **Home** | house | Greeting; **live** vehicle + location; set society / add vehicle / quote sheets; wash counts still **sample** until `GET /me/dashboard` |
 | **Schedule** | calendar | Sample upcoming visits (WASH-04 later) |
-| **Plan** | creditcard | Sample plan & billing (Modules 7–8 later) |
+| **Plan** | creditcard | Live quote entry + sample billing until Modules 7–8 |
 | **Account** | person | Live profile APIs |
+
+### Integrated consumer APIs
+
+| Area | Endpoints used in app |
+|------|------------------------|
+| Auth / profile | OTP, tokens, `/me` |
+| Location | `GET /cities`, societies, `GET/PUT /me/location`, waitlist |
+| Vehicle | makes/models catalog, `GET/PUT /me/vehicle` |
+| Pricing | interior options, `POST /pricing/quote` |
 
 ### Next modules (suggested order)
 
-1. **Location** — list cities/societies, waitlist (eligibility onboarding)
-2. **Vehicle** — register make/model from catalog
-3. **Pricing** — quote preview
-4. **Subscription + washes** — replace Home sample counts with live dashboard
+1. **Subscription + payments** — start plan after quote
+2. **Washes / dashboard** — replace sample Home counts with live data
 
 Align with [`docs/PRD.md`](../docs/PRD.md) and [`docs/API_INVENTORY.md`](../docs/API_INVENTORY.md).
 

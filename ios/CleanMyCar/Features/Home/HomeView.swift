@@ -9,6 +9,9 @@ struct HomeView: View {
     @State private var location: UserLocation?
     @State private var isLoadingExtras = false
     @State private var loadError: String?
+    @State private var showLocationSetup = false
+    @State private var showVehicleEditor = false
+    @State private var showQuote = false
 
     private let preview = DashboardPreview.sample
 
@@ -34,6 +37,22 @@ struct HomeView: View {
             }
             .task {
                 await reload()
+            }
+            .sheet(isPresented: $showLocationSetup) {
+                LocationSetupView { saved in
+                    location = saved
+                }
+                .environmentObject(appState)
+            }
+            .sheet(isPresented: $showVehicleEditor) {
+                VehicleEditorView(existing: vehicle) { saved in
+                    vehicle = saved
+                }
+                .environmentObject(appState)
+            }
+            .sheet(isPresented: $showQuote) {
+                QuoteView(location: location, vehicle: vehicle)
+                    .environmentObject(appState)
             }
         }
     }
@@ -147,7 +166,7 @@ struct HomeView: View {
             }
             Text(preview.planLabel)
                 .font(.subheadline)
-            Text("/ month · sample tariff")
+            Text("/ month · sample tariff until you run a live quote")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -156,10 +175,21 @@ struct HomeView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.green)
             } else {
-                Text("No live subscription yet — this card is a design preview.")
+                Text("No subscription yet. Price your city with a live quote.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Button {
+                showQuote = true
+            } label: {
+                Text(canQuote ? "Get live quote" : "Get quote (needs society + vehicle)")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(!canQuote)
         }
     }
 
@@ -186,10 +216,19 @@ struct HomeView: View {
                 Text("No vehicle registered yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("You’ll add make and model during onboarding.")
+                Text("Pick make and model from the ops catalog. Size tier is set automatically.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Button {
+                showVehicleEditor = true
+            } label: {
+                Text(vehicle == nil ? "Add vehicle" : "Update vehicle")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
         }
     }
 
@@ -226,13 +265,9 @@ struct HomeView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                // Fall back to sample society labels when the user has no location yet.
-                Text(preview.societyName)
+                Text("No society selected")
                     .font(.title3.weight(.semibold))
-                Text(preview.cityName)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text("Sample location — set city & society after eligibility flows land.")
+                Text("Choose a live apartment community to check eligibility.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -242,7 +277,20 @@ struct HomeView: View {
                     .font(.caption)
                     .foregroundStyle(BrandColor.accent)
             }
+
+            Button {
+                showLocationSetup = true
+            } label: {
+                Text(location?.society == nil ? "Set city & society" : "Change society")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
         }
+    }
+
+    private var canQuote: Bool {
+        location?.city != nil && vehicle != nil
     }
 
     // MARK: - Helpers
