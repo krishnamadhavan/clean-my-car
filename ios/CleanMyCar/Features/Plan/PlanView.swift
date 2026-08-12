@@ -1,14 +1,21 @@
 import SwiftUI
 
-/// Plan / billing surface — static until subscription & payment APIs ship.
+/// Plan / billing surface — live quote when city + vehicle exist; subscription still sample.
 struct PlanView: View {
+    @EnvironmentObject private var appState: AppState
+
     private let preview = DashboardPreview.sample
+
+    @State private var vehicle: UserVehicle?
+    @State private var location: UserLocation?
+    @State private var showQuote = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
                     sampleBanner
+                    liveQuoteCard
                     currentPlanCard
                     includesCard
                     billingCard
@@ -17,7 +24,44 @@ struct PlanView: View {
             }
             .background(BrandColor.background.ignoresSafeArea())
             .navigationTitle("Plan")
+            .task {
+                await loadContext()
+            }
+            .sheet(isPresented: $showQuote) {
+                QuoteView(location: location, vehicle: vehicle)
+                    .environmentObject(appState)
+            }
         }
+    }
+
+    private var liveQuoteCard: some View {
+        AppCard {
+            Label("City pricing", systemImage: "indianrupeesign.circle.fill")
+                .font(.headline)
+            if location?.city == nil || vehicle == nil {
+                Text("Set your society and vehicle on Home, then calculate a live pro-rated quote.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("\(location?.city?.name ?? "") · \(vehicle?.sizeTier.label ?? "")")
+                    .font(.subheadline)
+                Button {
+                    showQuote = true
+                } label: {
+                    Text("Calculate live quote")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+    }
+
+    private func loadContext() async {
+        async let v = try? appState.apiClient.fetchMyVehicle()
+        async let l = try? appState.apiClient.fetchMyLocation()
+        vehicle = await v
+        location = await l
     }
 
     private var sampleBanner: some View {

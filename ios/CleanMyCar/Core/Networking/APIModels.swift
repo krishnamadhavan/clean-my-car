@@ -14,6 +14,29 @@ enum APIPath {
     static let deactivate = v1("/me/deactivate")
     static let meVehicle = v1("/me/vehicle")
     static let meLocation = v1("/me/location")
+    static let cities = v1("/cities")
+    static let waitlist = v1("/waitlist")
+    static let meWaitlist = v1("/me/waitlist")
+    static let vehicleMakes = v1("/vehicle-makes")
+    static let vehicleSizeTiers = v1("/vehicle-size-tiers")
+    static let interiorOptions = v1("/interior-options")
+    static let pricingQuote = v1("/pricing/quote")
+
+    static func citySocieties(_ cityId: UUID) -> String {
+        v1("/cities/\(cityId.uuidString)/societies")
+    }
+
+    static func society(_ societyId: UUID) -> String {
+        v1("/societies/\(societyId.uuidString)")
+    }
+
+    static func vehicleModels(makeId: UUID) -> String {
+        v1("/vehicle-makes/\(makeId.uuidString)/models")
+    }
+
+    static func cityPricing(_ cityId: UUID) -> String {
+        v1("/cities/\(cityId.uuidString)/pricing")
+    }
 }
 
 struct MessageResponse: Decodable, Sendable {
@@ -117,7 +140,7 @@ struct OTPChallenge: Hashable, Identifiable, Sendable {
 
 // MARK: - Vehicle (Module 5)
 
-enum VehicleSizeTier: String, Decodable, Sendable {
+enum VehicleSizeTier: String, Codable, Sendable, CaseIterable {
     case small
     case medium
     case large
@@ -131,13 +154,13 @@ enum VehicleSizeTier: String, Decodable, Sendable {
     }
 }
 
-struct VehicleMakeSummary: Decodable, Sendable, Equatable {
+struct VehicleMakeSummary: Decodable, Sendable, Equatable, Identifiable, Hashable {
     let id: UUID
     let name: String
     let displayOrder: Int
 }
 
-struct VehicleModelSummary: Decodable, Sendable, Equatable {
+struct VehicleModelSummary: Decodable, Sendable, Equatable, Identifiable, Hashable {
     let id: UUID
     let makeId: UUID
     let name: String
@@ -188,14 +211,14 @@ struct UserVehicle: Decodable, Sendable, Equatable, Identifiable {
 
 // MARK: - Location (Module 3)
 
-struct CitySummary: Decodable, Sendable, Equatable, Identifiable {
+struct CitySummary: Decodable, Sendable, Equatable, Identifiable, Hashable {
     let id: UUID
     let name: String
     let state: String
     let displayOrder: Int
 }
 
-struct SocietySummary: Decodable, Sendable, Equatable, Identifiable {
+struct SocietySummary: Decodable, Sendable, Equatable, Identifiable, Hashable {
     let id: UUID
     let cityId: UUID
     let name: String
@@ -213,6 +236,223 @@ struct UserLocation: Decodable, Sendable, Equatable {
     var hasLocation: Bool {
         city != nil || society != nil
     }
+}
+
+struct SocietyListResponse: Decodable, Sendable {
+    let items: [SocietySummary]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct SocietyDetail: Decodable, Sendable, Equatable, Identifiable {
+    let id: UUID
+    let cityId: UUID
+    let name: String
+    let addressLine: String?
+    let serviceWeekdays: [Int]
+    let serviceWeekdayLabels: [String]
+    let displayOrder: Int
+    let city: CitySummary
+    let isServiceable: Bool
+}
+
+struct UserLocationUpdateBody: Encodable {
+    let cityId: UUID
+    let societyId: UUID
+}
+
+// MARK: - Waitlist (Module 4)
+
+enum WaitlistStatus: String, Decodable, Sendable {
+    case pending
+    case contacted
+    case converted
+    case closed
+
+    var label: String {
+        rawValue.capitalized
+    }
+}
+
+struct WaitlistCreateBody: Encodable {
+    let cityId: UUID
+    let societyName: String
+    let phone: String?
+    let notes: String?
+}
+
+struct WaitlistEntry: Decodable, Sendable, Identifiable, Equatable {
+    let id: UUID
+    let cityId: UUID
+    let city: CitySummary?
+    let societyName: String
+    let phone: String
+    let notes: String?
+    let status: WaitlistStatus
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct WaitlistListResponse: Decodable, Sendable {
+    let items: [WaitlistEntry]
+}
+
+// MARK: - Vehicle catalog writes
+
+struct VehicleModelListResponse: Decodable, Sendable {
+    let items: [VehicleModelSummary]
+}
+
+struct VehiclePutBody: Encodable {
+    let modelId: UUID
+    let nickname: String?
+    let plateNumber: String?
+    let colour: String?
+    let parkingSlot: String?
+    let parkingTower: String?
+}
+
+/// PATCH body — only non-nil fields are sent (see `VehiclePatchBody.encode`).
+struct VehiclePatchBody: Encodable {
+    var modelId: UUID?
+    var nickname: String?
+    var plateNumber: String?
+    var colour: String?
+    var parkingSlot: String?
+    var parkingTower: String?
+    /// Fields to send as JSON null (clear on server).
+    var clearFields: Set<String> = []
+
+    enum CodingKeys: String, CodingKey {
+        case modelId, nickname, plateNumber, colour, parkingSlot, parkingTower
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if let modelId { try container.encode(modelId, forKey: .modelId) }
+        try encodeOptional(nickname, key: .nickname, into: &container)
+        try encodeOptional(plateNumber, key: .plateNumber, into: &container)
+        try encodeOptional(colour, key: .colour, into: &container)
+        try encodeOptional(parkingSlot, key: .parkingSlot, into: &container)
+        try encodeOptional(parkingTower, key: .parkingTower, into: &container)
+    }
+
+    private func encodeOptional(
+        _ value: String?,
+        key: CodingKeys,
+        into container: inout KeyedEncodingContainer<CodingKeys>
+    ) throws {
+        if clearFields.contains(key.stringValue) {
+            try container.encodeNil(forKey: key)
+        } else if let value {
+            try container.encode(value, forKey: key)
+        }
+    }
+}
+
+struct VehicleSizeTierInfo: Decodable, Sendable, Identifiable, Equatable {
+    let code: VehicleSizeTier
+    let label: String
+    let description: String
+
+    var id: String { code.rawValue }
+}
+
+struct VehicleSizeTierListResponse: Decodable, Sendable {
+    let items: [VehicleSizeTierInfo]
+}
+
+// MARK: - Pricing (Module 6)
+
+struct InteriorOption: Decodable, Sendable, Identifiable, Equatable {
+    let frequency: Int
+    let code: String
+    let label: String
+    let description: String
+
+    var id: Int { frequency }
+}
+
+struct InteriorOptionsResponse: Decodable, Sendable {
+    let items: [InteriorOption]
+}
+
+struct SizePrice: Decodable, Sendable, Equatable {
+    let sizeTier: VehicleSizeTier
+    let monthlyAmountPaise: Int
+}
+
+struct InteriorPrice: Decodable, Sendable, Equatable {
+    let interiorFrequency: Int
+    let monthlyAmountPaise: Int
+}
+
+struct PricingMatrixCell: Decodable, Sendable, Equatable {
+    let sizeTier: VehicleSizeTier
+    let interiorFrequency: Int
+    let baseAmountPaise: Int
+    let interiorAmountPaise: Int
+    let monthlyTotalPaise: Int
+}
+
+struct CityPricing: Decodable, Sendable, Equatable {
+    let city: CitySummary
+    let currency: String
+    let amountsIncludeGst: Bool
+    let gstRateBps: Int
+    let sizePrices: [SizePrice]
+    let interiorPrices: [InteriorPrice]
+    let matrix: [PricingMatrixCell]
+}
+
+struct QuoteRequestBody: Encodable {
+    let cityId: UUID
+    let sizeTier: VehicleSizeTier
+    let interiorFrequency: Int
+    let startDate: String?
+    let societyId: UUID?
+}
+
+struct MoneyBreakdown: Decodable, Sendable, Equatable {
+    let baseAmountPaise: Int
+    let gstPaise: Int
+    let totalPaise: Int
+}
+
+struct QuoteResponse: Decodable, Sendable, Equatable {
+    let city: CitySummary
+    let sizeTier: VehicleSizeTier
+    let interiorFrequency: Int
+    let currency: String
+    let amountsIncludeGst: Bool
+    let gstRateBps: Int
+
+    let fullMonthlyBasePaise: Int
+    let fullMonthlyInteriorPaise: Int
+    let fullMonthlyTotalPaise: Int
+    let fullMonthlyBreakdown: MoneyBreakdown
+
+    let startDate: Date
+    let billingMonth: String
+    let daysInMonth: Int
+    let remainingDays: Int
+    let amountDueNowPaise: Int
+    let amountDueNowBreakdown: MoneyBreakdown
+    let isProrated: Bool
+
+    let nextBillingMonth: String
+    let nextFullMonthAmountPaise: Int
+
+    let exteriorEntitledThisPeriod: Int?
+    let exteriorEntitledFullMonth: Int?
+    let interiorEntitledThisPeriod: Int
+    let interiorEntitledFullMonth: Int
+
+    let society: SocietySummary?
+    let serviceWeekdays: [Int]?
+    let serviceWeekdayLabels: [String]?
+    let proRateMethod: String
 }
 
 // MARK: - Dashboard preview (until DASH-01 / WASH-* APIs exist)

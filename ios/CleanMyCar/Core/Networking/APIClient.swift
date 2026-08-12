@@ -94,7 +94,7 @@ final class APIClient {
         do {
             return try await send(method: .get, path: APIPath.meVehicle, authenticated: true)
         } catch let error as APIError {
-            if case let .server(status, code, _) = error,
+            if case let .server(status, code, _, _) = error,
                status == 404 || code == "vehicle_not_found" || code == "not_found"
             {
                 return nil
@@ -107,9 +107,156 @@ final class APIClient {
         try await send(method: .get, path: APIPath.meLocation, authenticated: true)
     }
 
+    func setMyLocation(cityId: UUID, societyId: UUID) async throws -> UserLocation {
+        try await send(
+            method: .put,
+            path: APIPath.meLocation,
+            body: UserLocationUpdateBody(cityId: cityId, societyId: societyId),
+            authenticated: true
+        )
+    }
+
+    func listCities() async throws -> [CitySummary] {
+        try await send(method: .get, path: APIPath.cities)
+    }
+
+    func listSocieties(
+        cityId: UUID,
+        q: String? = nil,
+        page: Int = 1,
+        pageSize: Int = 50
+    ) async throws -> SocietyListResponse {
+        var path = "\(APIPath.citySocieties(cityId))?page=\(page)&page_size=\(pageSize)"
+        if let q, !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let encoded = q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? q
+            path += "&q=\(encoded)"
+        }
+        return try await send(method: .get, path: path)
+    }
+
+    func getSociety(id: UUID) async throws -> SocietyDetail {
+        try await send(method: .get, path: APIPath.society(id))
+    }
+
+    func joinWaitlist(
+        cityId: UUID,
+        societyName: String,
+        phone: String? = nil,
+        notes: String? = nil
+    ) async throws -> WaitlistEntry {
+        try await send(
+            method: .post,
+            path: APIPath.waitlist,
+            body: WaitlistCreateBody(
+                cityId: cityId,
+                societyName: societyName,
+                phone: phone,
+                notes: notes
+            ),
+            authenticated: true
+        )
+    }
+
+    func listMyWaitlist() async throws -> WaitlistListResponse {
+        try await send(method: .get, path: APIPath.meWaitlist, authenticated: true)
+    }
+
+    func listVehicleMakes() async throws -> [VehicleMakeSummary] {
+        try await send(method: .get, path: APIPath.vehicleMakes)
+    }
+
+    func listVehicleModels(makeId: UUID) async throws -> [VehicleModelSummary] {
+        let response: VehicleModelListResponse = try await send(
+            method: .get,
+            path: APIPath.vehicleModels(makeId: makeId)
+        )
+        return response.items
+    }
+
+    func putMyVehicle(
+        modelId: UUID,
+        nickname: String? = nil,
+        plateNumber: String? = nil,
+        colour: String? = nil,
+        parkingSlot: String? = nil,
+        parkingTower: String? = nil
+    ) async throws -> UserVehicle {
+        try await send(
+            method: .put,
+            path: APIPath.meVehicle,
+            body: VehiclePutBody(
+                modelId: modelId,
+                nickname: nickname,
+                plateNumber: plateNumber,
+                colour: colour,
+                parkingSlot: parkingSlot,
+                parkingTower: parkingTower
+            ),
+            authenticated: true
+        )
+    }
+
+    func patchMyVehicle(_ body: VehiclePatchBody) async throws -> UserVehicle {
+        try await send(
+            method: .patch,
+            path: APIPath.meVehicle,
+            body: body,
+            authenticated: true
+        )
+    }
+
+    func deleteMyVehicle() async throws {
+        let _: MessageResponse = try await send(
+            method: .delete,
+            path: APIPath.meVehicle,
+            authenticated: true
+        )
+    }
+
+    func listVehicleSizeTiers() async throws -> [VehicleSizeTierInfo] {
+        let response: VehicleSizeTierListResponse = try await send(
+            method: .get,
+            path: APIPath.vehicleSizeTiers
+        )
+        return response.items
+    }
+
+    func listInteriorOptions() async throws -> [InteriorOption] {
+        let response: InteriorOptionsResponse = try await send(
+            method: .get,
+            path: APIPath.interiorOptions
+        )
+        return response.items
+    }
+
+    func getCityPricing(cityId: UUID) async throws -> CityPricing {
+        try await send(method: .get, path: APIPath.cityPricing(cityId))
+    }
+
+    func createQuote(
+        cityId: UUID,
+        sizeTier: VehicleSizeTier,
+        interiorFrequency: Int,
+        startDate: Date? = nil,
+        societyId: UUID? = nil
+    ) async throws -> QuoteResponse {
+        try await send(
+            method: .post,
+            path: APIPath.pricingQuote,
+            body: QuoteRequestBody(
+                cityId: cityId,
+                sizeTier: sizeTier,
+                interiorFrequency: interiorFrequency,
+                startDate: startDate.map(JSONCoders.formatDay),
+                societyId: societyId
+            )
+        )
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"
+        case put = "PUT"
         case patch = "PATCH"
         case delete = "DELETE"
     }
