@@ -94,7 +94,7 @@ final class APIClient {
         do {
             return try await send(method: .get, path: APIPath.meVehicle, authenticated: true)
         } catch let error as APIError {
-            if case let .server(status, code, _) = error,
+            if case let .server(status, code, _, _) = error,
                status == 404 || code == "vehicle_not_found" || code == "not_found"
             {
                 return nil

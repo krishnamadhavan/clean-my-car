@@ -22,7 +22,9 @@ struct VehicleEditorView: View {
     @State private var isLoadingMakes = true
     @State private var isLoadingModels = false
     @State private var isSaving = false
-    @State private var errorMessage: String?
+    @State private var formError: String?
+    @State private var plateError: String?
+    @State private var fieldErrors: [String: String] = [:]
 
     var body: some View {
         NavigationStack {
@@ -69,15 +71,23 @@ struct VehicleEditorView: View {
                         LabeledContent("Size tier", value: selectedModel.sizeTier.label)
                             .foregroundStyle(.secondary)
                     }
+                    if let modelError = fieldErrors["model_id"] ?? fieldErrors["modelId"] {
+                        Text(modelError)
+                            .font(.caption)
+                            .foregroundStyle(BrandColor.accent)
+                    }
                 }
 
-                Section("Details (optional)") {
+                Section {
                     TextField("Nickname", text: $nickname)
-                    TextField("Plate number", text: $plateNumber)
-                        .textInputAutocapitalization(.characters)
+                    plateField
                     TextField("Colour", text: $colour)
                     TextField("Parking slot", text: $parkingSlot)
                     TextField("Tower / block", text: $parkingTower)
+                } header: {
+                    Text("Details (optional)")
+                } footer: {
+                    Text(IndianPlate.formatHint)
                 }
 
                 Section {
@@ -89,9 +99,9 @@ struct VehicleEditorView: View {
                     }
                 }
 
-                if let errorMessage {
+                if let formError {
                     Section {
-                        Text(errorMessage)
+                        Text(formError)
                             .foregroundStyle(BrandColor.accent)
                     }
                 }
@@ -110,7 +120,7 @@ struct VehicleEditorView: View {
                         Button("Save") {
                             Task { await save() }
                         }
-                        .disabled(selectedModel == nil)
+                        .disabled(!canSave)
                     }
                 }
             }
@@ -121,10 +131,73 @@ struct VehicleEditorView: View {
         }
     }
 
+    private var plateField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Registration plate")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                plateKindBadge
+            }
+            TextField(IndianPlate.placeholder, text: $plateNumber)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .font(.body.monospaced())
+                .onChange(of: plateNumber) { _, newValue in
+                    let normalized = IndianPlate.normalizeInput(newValue)
+                    if normalized != newValue {
+                        plateNumber = normalized
+                    }
+                    plateError = nil
+                    fieldErrors.removeValue(forKey: "plate_number")
+                    fieldErrors.removeValue(forKey: "plateNumber")
+                    // Live feedback only after the user has typed enough to be wrong mid-entry
+                    if !normalized.isEmpty, normalized.count >= 8 {
+                        plateError = IndianPlate.validate(normalized).error
+                    }
+                }
+
+            if let plateError {
+                Text(plateError)
+                    .font(.caption)
+                    .foregroundStyle(BrandColor.accent)
+            } else if let apiPlate = fieldErrors["plate_number"] ?? fieldErrors["plateNumber"] {
+                Text(apiPlate)
+                    .font(.caption)
+                    .foregroundStyle(BrandColor.accent)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var plateKindBadge: some View {
+        switch IndianPlate.kind(of: plateNumber) {
+        case .empty:
+            EmptyView()
+        case .standard:
+            Text("Standard")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.green)
+        case .bharat:
+            Text("BH series")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(BrandColor.primary)
+        case .invalid:
+            Text("Invalid")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(BrandColor.accent)
+        }
+    }
+
+    private var canSave: Bool {
+        selectedModel != nil && !isSaving && IndianPlate.isValidOrEmpty(plateNumber)
+    }
+
     private func prefillFromExisting() {
         guard let existing else { return }
         nickname = existing.nickname ?? ""
-        plateNumber = existing.plateNumber ?? ""
+        plateNumber = existing.plateNumber.map(IndianPlate.normalizeInput) ?? ""
         colour = existing.colour ?? ""
         parkingSlot = existing.parkingSlot ?? ""
         parkingTower = existing.parkingTower ?? ""
@@ -132,7 +205,7 @@ struct VehicleEditorView: View {
 
     private func loadMakes() async {
         isLoadingMakes = true
-        errorMessage = nil
+        formError = nil
         defer { isLoadingMakes = false }
         do {
             makes = try await appState.apiClient.listVehicleMakes()
@@ -145,32 +218,41 @@ struct VehicleEditorView: View {
                 }
             }
         } catch {
-            errorMessage = error.localizedDescription
+            applyError(error)
         }
     }
 
     private func loadModels(for make: VehicleMakeSummary) async {
         isLoadingModels = true
-        errorMessage = nil
+        formError = nil
         defer { isLoadingModels = false }
         do {
             models = try await appState.apiClient.listVehicleModels(makeId: make.id)
                 .sorted { $0.displayOrder < $1.displayOrder }
         } catch {
-            errorMessage = error.localizedDescription
+            applyError(error)
         }
     }
 
     private func save() async {
         guard let selectedModel else { return }
+
+        // Client-side plate check before hitting the API
+        let plateResult = IndianPlate.validate(plateNumber)
+        if let message = plateResult.error {
+            plateError = message
+            return
+        }
+        plateError = nil
         isSaving = true
-        errorMessage = nil
+        formError = nil
+        fieldErrors = [:]
         defer { isSaving = false }
         do {
             let vehicle = try await appState.apiClient.putMyVehicle(
                 modelId: selectedModel.id,
                 nickname: nickname.nilIfEmpty,
-                plateNumber: plateNumber.nilIfEmpty,
+                plateNumber: plateResult.normalized,
                 colour: colour.nilIfEmpty,
                 parkingSlot: parkingSlot.nilIfEmpty,
                 parkingTower: parkingTower.nilIfEmpty
@@ -179,7 +261,29 @@ struct VehicleEditorView: View {
             onSaved?(vehicle)
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            applyError(error)
+        }
+    }
+
+    private func applyError(_ error: Error) {
+        if let apiError = error as? APIError {
+            fieldErrors = apiError.fieldErrors
+            if let plateMsg = apiError.message(forField: "plate_number")
+                ?? apiError.message(forField: "plateNumber")
+            {
+                plateError = plateMsg
+            }
+            // Prefer a short general message; avoid duplicating the plate line if that's all we have.
+            let general = apiError.localizedDescription
+            if plateError != nil, fieldErrors.count <= 1,
+               general == plateError || general.contains("plate")
+            {
+                formError = nil
+            } else {
+                formError = general
+            }
+        } else {
+            formError = error.localizedDescription
         }
     }
 }
