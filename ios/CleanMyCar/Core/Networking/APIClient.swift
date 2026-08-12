@@ -253,6 +253,70 @@ final class APIClient {
         )
     }
 
+    func fetchMySubscription() async throws -> UserSubscription? {
+        do {
+            return try await send(method: .get, path: APIPath.meSubscription, authenticated: true)
+        } catch let error as APIError {
+            if case let .server(status, code, _, _) = error,
+               status == 404 || code == "subscription_not_found" || code == "not_found"
+            {
+                return nil
+            }
+            throw error
+        }
+    }
+
+    func startSubscription(interiorFrequency: Int, startDate: Date? = nil) async throws -> SubscriptionStartResponse {
+        try await send(
+            method: .post,
+            path: APIPath.meSubscription,
+            body: SubscriptionStartBody(
+                interiorFrequency: interiorFrequency,
+                startDate: startDate.map(JSONCoders.formatDay)
+            ),
+            authenticated: true
+        )
+    }
+
+    func cancelSubscription() async throws -> UserSubscription {
+        try await send(method: .post, path: APIPath.meSubscriptionCancel, authenticated: true)
+    }
+
+    func undoCancelSubscription() async throws -> UserSubscription {
+        try await send(method: .post, path: APIPath.meSubscriptionCancelUndo, authenticated: true)
+    }
+
+    func createPaymentIntent(subscriptionId: UUID? = nil) async throws -> UserPayment {
+        try await send(
+            method: .post,
+            path: APIPath.mePaymentIntents,
+            body: PaymentIntentCreateBody(subscriptionId: subscriptionId),
+            authenticated: true
+        )
+    }
+
+    func getPaymentIntent(_ id: UUID) async throws -> UserPayment {
+        try await send(method: .get, path: APIPath.mePaymentIntent(id), authenticated: true)
+    }
+
+    func confirmPaymentIntent(_ id: UUID, providerRef: String? = nil) async throws -> UserPayment {
+        try await send(
+            method: .post,
+            path: APIPath.mePaymentIntentConfirm(id),
+            body: PaymentConfirmBody(providerRef: providerRef),
+            authenticated: true
+        )
+    }
+
+    func listMyPayments(page: Int = 1, pageSize: Int = 20) async throws -> PaymentListResponse {
+        let path = "\(APIPath.mePayments)?page=\(page)&page_size=\(pageSize)"
+        return try await send(method: .get, path: path, authenticated: true)
+    }
+
+    func fetchBillingSummary() async throws -> BillingSummary {
+        try await send(method: .get, path: APIPath.meBillingSummary, authenticated: true)
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"
