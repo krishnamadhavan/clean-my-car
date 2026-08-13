@@ -7,14 +7,18 @@ Inventory: ``docs/OPS_API_INVENTORY.md``.
 from fastapi import APIRouter
 
 from app.api.ops.endpoints import (
+    app_config,
     auth,
+    content,
     health,
     location,
     notification,
     overview,
     payment,
+    platform,
     pricing,
     subscription,
+    support,
     users,
     vehicle,
     waitlist,
@@ -34,3 +38,7 @@ ops_router.include_router(payment.router)
 ops_router.include_router(wash.router)
 ops_router.include_router(overview.router)
 ops_router.include_router(notification.router)
+ops_router.include_router(content.router)
+ops_router.include_router(support.router)
+ops_router.include_router(app_config.router)
+ops_router.include_router(platform.router)
