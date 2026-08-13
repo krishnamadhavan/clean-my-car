@@ -395,6 +395,41 @@ final class APIClient {
         )
     }
 
+    func fetchFaq() async throws -> [FaqEntry] {
+        let response: FaqListResponse = try await send(method: .get, path: APIPath.contentFaq)
+        return response.items
+    }
+
+    func fetchLegal(docType: String) async throws -> LegalDocument {
+        try await send(method: .get, path: APIPath.contentLegal(docType))
+    }
+
+    func fetchSupportContact() async throws -> ContactChannels {
+        try await send(method: .get, path: APIPath.supportContact)
+    }
+
+    func listSupportTickets(page: Int = 1, pageSize: Int = 20) async throws -> SupportTicketListResponse {
+        let path = "\(APIPath.meSupportTickets)?page=\(page)&page_size=\(pageSize)"
+        return try await send(method: .get, path: path, authenticated: true)
+    }
+
+    func createSupportTicket(category: SupportTicketCategory, message: String) async throws -> SupportTicket {
+        try await send(
+            method: .post,
+            path: APIPath.meSupportTickets,
+            body: SupportTicketCreateBody(category: category, message: message),
+            authenticated: true
+        )
+    }
+
+    func getSupportTicket(_ id: UUID) async throws -> SupportTicket {
+        try await send(method: .get, path: APIPath.meSupportTicket(id), authenticated: true)
+    }
+
+    func fetchAppConfig() async throws -> AppConfigResponse {
+        try await send(method: .get, path: APIPath.appConfig)
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"

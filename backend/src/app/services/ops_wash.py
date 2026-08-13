@@ -144,7 +144,10 @@ class OpsWashService:
             wash.notes = body.notes
 
         if body.schedule_retry:
+            # Next calendar day, but never Sunday (not serviceable) — use Monday.
             retry_date = wash.service_date + timedelta(days=1)
+            if retry_date.weekday() == 6:  # Sunday
+                retry_date = retry_date + timedelta(days=1)
             existing = (
                 await self.session.execute(
                     select(Wash).where(

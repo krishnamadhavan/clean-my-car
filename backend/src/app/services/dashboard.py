@@ -48,14 +48,14 @@ class DashboardService:
                     s = await self.session.get(Society, user.society_id)
                     if s is not None:
                         society_out = SocietySummaryOut.from_society(s)
-                        weekdays = list(s.service_weekdays or [])
+                        weekdays = [d for d in (s.service_weekdays or []) if 0 <= d <= 5]
             return DashboardOut(
                 has_subscription=False,
                 vehicle=vehicle,
                 city=city_out,
                 society=society_out,
                 service_weekdays=weekdays,
-                service_weekday_labels=[WEEKDAY_LABELS[d] for d in weekdays if 0 <= d <= 6],
+                service_weekday_labels=[WEEKDAY_LABELS[d] for d in weekdays],
                 amount_due_paise=billing.amount_due_paise,
                 currency=billing.currency,
                 billing_message=billing.message,
@@ -68,7 +68,9 @@ class DashboardService:
             if loaded is not None:
                 sub = loaded
 
-        weekdays = list(sub.society.service_weekdays or []) if sub.society else []
+        weekdays = (
+            [d for d in (sub.society.service_weekdays or []) if 0 <= d <= 5] if sub.society else []
+        )
         summary = await self.washes.summary(user)
         next_service = await self._next_service(user.id)
         sub_out = self.subscriptions._to_out(sub)
@@ -80,7 +82,7 @@ class DashboardService:
             city=CityOut.model_validate(sub.city) if sub.city else None,
             society=SocietySummaryOut.from_society(sub.society) if sub.society else None,
             service_weekdays=weekdays,
-            service_weekday_labels=[WEEKDAY_LABELS[d] for d in weekdays if 0 <= d <= 6],
+            service_weekday_labels=[WEEKDAY_LABELS[d] for d in weekdays],
             wash_summary=summary,
             next_service=next_service,
             amount_due_paise=billing.amount_due_paise,

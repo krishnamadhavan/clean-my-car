@@ -253,3 +253,101 @@ export interface OpsPayment {
   created_at: string
   updated_at: string
 }
+
+export type WashStatus =
+  | 'scheduled'
+  | 'completed'
+  | 'missed'
+  | 'retry_scheduled'
+  | 'skipped'
+
+export type SupportTicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+export type SupportTicketCategory = 'billing' | 'service' | 'account' | 'other'
+export type LegalDocType = 'terms' | 'privacy' | 'cancellation'
+
+export interface OpsOverview {
+  cities_total: number
+  cities_active: number
+  societies_live: number
+  waitlist_open: number
+  subscriptions_active: number
+  subscriptions_pending_payment: number
+  washes_scheduled_today: number
+  washes_completed_today: number
+}
+
+export interface OpsWash {
+  id: string
+  user_id: string
+  subscription_id: string
+  society_id: string
+  vehicle_id: string | null
+  service_date: string
+  status: WashStatus
+  includes_exterior: boolean
+  includes_interior: boolean
+  completed_at: string | null
+  completed_by_operator_id: string | null
+  miss_reason: string | null
+  retry_of_wash_id: string | null
+  notes: string | null
+  user_phone: string | null
+  user_name: string | null
+  society_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OpsSupportTicket {
+  id: string
+  user_id: string
+  category: SupportTicketCategory
+  message: string
+  status: SupportTicketStatus
+  wash_id: string | null
+  payment_id: string | null
+  ops_reply: string | null
+  ops_notes: string | null
+  user_phone: string | null
+  user_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface FaqEntry {
+  id: string
+  question: string
+  answer: string
+  category: string
+  display_order: number
+}
+
+export interface LegalDocument {
+  doc_type: LegalDocType
+  version: string
+  title: string
+  body: string | null
+  url: string | null
+  published_at: string | null
+}
+
+export interface AppConfig {
+  min_ios_version: string
+  force_update: boolean
+  feature_flags: Record<string, unknown>
+  support_whatsapp: string | null
+  support_email: string | null
+  support_phone: string | null
+  support_whatsapp_url: string | null
+}
+
+export interface AuditEvent {
+  id: string
+  operator_id: string | null
+  action: string
+  resource_type: string
+  resource_id: string | null
+  details: Record<string, unknown> | null
+  summary: string | null
+  created_at: string
+}

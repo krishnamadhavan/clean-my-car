@@ -18,7 +18,7 @@ class ScheduleOccurrenceOut(BaseModel):
     """One upcoming wash day (service day or retry)."""
 
     date: date
-    weekday: int = Field(description="0=Monday … 6=Sunday")
+    weekday: int = Field(description="0=Monday … 5=Saturday (Sunday not serviceable)")
     weekday_label: str
     kind: ScheduleOccurrenceKind
     title: str

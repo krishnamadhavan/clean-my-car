@@ -65,7 +65,7 @@ class WashService:
             period_end = min(period_end, sub.cancel_at)
 
         society = sub.society
-        weekdays = list(society.service_weekdays or []) if society else []
+        weekdays = [d for d in (society.service_weekdays or []) if 0 <= d <= 5] if society else []
         exterior_entitled = count_service_days(
             period_start, service_weekdays=weekdays, end=period_end
         )
@@ -177,8 +177,8 @@ class WashService:
             loaded = await self.subscriptions._load(sub.id)
             sub = loaded or sub
         society = sub.society
-        weekdays = list(society.service_weekdays or []) if society else []
-        labels = [WEEKDAY_LABELS[d] for d in weekdays if 0 <= d <= 6]
+        weekdays = [d for d in (society.service_weekdays or []) if 0 <= d <= 5] if society else []
+        labels = [WEEKDAY_LABELS[d] for d in weekdays]
 
         period_end = sub.period_end
         if sub.cancel_at is not None:
@@ -219,6 +219,9 @@ class WashService:
 
         items: list[ScheduleOccurrenceOut] = []
         for w in rows:
+            wd = w.service_date.weekday()
+            if wd > 5:
+                continue  # Sunday is not serviceable
             kind = (
                 ScheduleOccurrenceKind.retry_scheduled
                 if w.status == WashStatus.retry_scheduled
@@ -232,8 +235,8 @@ class WashService:
             items.append(
                 ScheduleOccurrenceOut(
                     date=w.service_date,
-                    weekday=w.service_date.weekday(),
-                    weekday_label=WEEKDAY_LABELS[w.service_date.weekday()],
+                    weekday=wd,
+                    weekday_label=WEEKDAY_LABELS[wd],
                     kind=kind,
                     title=title,
                     note=w.notes,
@@ -266,7 +269,7 @@ class WashService:
             society = await self.session.get(Society, sub.society_id)
         if society is None:
             return 0
-        weekdays = list(society.service_weekdays or [])
+        weekdays = [d for d in (society.service_weekdays or []) if 0 <= d <= 5]
         if not weekdays:
             return 0
 

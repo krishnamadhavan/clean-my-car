@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Home dashboard — live profile / vehicle / location; wash & plan use static preview
-/// until `GET /me/dashboard` and subscription APIs ship.
+/// Home dashboard — live data from `GET /me/dashboard` (DASH-01).
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
 
+    @State private var dashboard: DashboardResponse?
     @State private var vehicle: UserVehicle?
     @State private var location: UserLocation?
     @State private var isLoadingExtras = false
@@ -13,13 +13,26 @@ struct HomeView: View {
     @State private var showVehicleEditor = false
     @State private var showQuote = false
 
-    private let preview = DashboardPreview.sample
+    private var washSummary: WashSummary? { dashboard?.washSummary }
+    private var serviceWeekdays: [Int] {
+        if let days = dashboard?.serviceWeekdays, !days.isEmpty { return days }
+        return location?.society?.serviceWeekdays ?? []
+    }
+
+    private var canQuote: Bool {
+        location?.city != nil && vehicle != nil
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    previewBanner
+                    if let loadError {
+                        Text(loadError)
+                            .font(.caption)
+                            .foregroundStyle(BrandColor.accent)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     greetingHeader
                     progressCard
                     nextServiceCard
@@ -32,12 +45,8 @@ struct HomeView: View {
             }
             .background(BrandColor.background.ignoresSafeArea())
             .navigationTitle("Home")
-            .refreshable {
-                await reload()
-            }
-            .task {
-                await reload()
-            }
+            .refreshable { await reload() }
+            .task { await reload() }
             .sheet(isPresented: $showLocationSetup) {
                 LocationSetupView { saved in
                     location = saved
@@ -57,26 +66,6 @@ struct HomeView: View {
                     .environmentObject(appState)
             }
         }
-    }
-
-    // MARK: - Sections
-
-    private var previewBanner: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "sparkles")
-                .foregroundStyle(BrandColor.secondaryAlt)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Sample wash progress")
-                    .font(.subheadline.weight(.semibold))
-                Text("Live completed / pending counts arrive with the subscription module.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .background(BrandColor.primarySoft.opacity(0.28))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var greetingHeader: some View {
@@ -100,32 +89,38 @@ struct HomeView: View {
 
     private var progressCard: some View {
         AppCard {
+            let completed = washSummary?.exteriorCompleted ?? 0
+            let entitled = washSummary?.exteriorEntitled ?? 0
+            let pending = washSummary?.exteriorPending ?? max(entitled - completed, 0)
+            let interiorDone = washSummary?.interiorCompleted ?? 0
+            let interiorIncluded = washSummary?.interiorIncluded ?? 0
+            let interiorProgress =
+                interiorIncluded > 0
+                    ? min(Double(interiorDone) / Double(interiorIncluded), 1)
+                    : 0
+
             HStack(alignment: .center, spacing: 20) {
-                WashProgressRing(
-                    completed: preview.exteriorCompleted,
-                    entitled: preview.exteriorEntitled
-                )
+                WashProgressRing(completed: completed, entitled: max(entitled, 1))
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("This month")
                         .font(.headline)
 
-                    metricRow(
-                        title: "Pending",
-                        value: "\(preview.exteriorPending)",
-                        systemImage: "clock"
-                    )
+                    metricRow(title: "Pending", value: "\(pending)", systemImage: "clock")
                     metricRow(
                         title: "Interior",
-                        value: "\(preview.interiorCompleted) / \(preview.interiorIncluded)",
+                        value: "\(interiorDone) / \(interiorIncluded)",
                         systemImage: "sofa"
                     )
 
-                    ProgressView(value: preview.interiorProgress)
+                    ProgressView(value: interiorProgress)
                         .tint(BrandColor.secondary)
-                        .accessibilityLabel(
-                            "Interior \(preview.interiorCompleted) of \(preview.interiorIncluded)"
-                        )
+
+                    if dashboard?.hasSubscription != true {
+                        Text(dashboard?.message ?? "Subscribe to track wash progress.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -134,25 +129,37 @@ struct HomeView: View {
 
     private var nextServiceCard: some View {
         AppCard {
-            Label(
-                preview.isNextServiceRetry ? "Next-day retry" : "Next service",
-                systemImage: preview.isNextServiceRetry ? "arrow.clockwise" : "calendar"
-            )
-            .font(.headline)
-            .foregroundStyle(BrandColor.primary)
+            if let next = dashboard?.nextService {
+                Label(
+                    next.isRetry ? "Next-day retry" : "Next service",
+                    systemImage: next.isRetry ? "arrow.clockwise" : "calendar"
+                )
+                .font(.headline)
+                .foregroundStyle(BrandColor.primary)
 
-            Text(preview.nextServiceDate.formatted(date: .complete, time: .omitted))
-                .font(.title3.weight(.semibold))
-            Text(preview.nextServiceDate.formatted(date: .omitted, time: .shortened))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text(next.date.formatted(date: .complete, time: .omitted))
+                    .font(.title3.weight(.semibold))
+                Text(next.title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                Label("Next service", systemImage: "calendar")
+                    .font(.headline)
+                    .foregroundStyle(BrandColor.primary)
+                Text(dashboard?.hasSubscription == true
+                    ? "No upcoming washes in this period."
+                    : "Subscribe to see your next wash day.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
-            Divider().padding(.vertical, 4)
-
-            Text("Weekly service days")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            ServiceWeekdayChips(active: preview.serviceWeekdays)
+            if !serviceWeekdays.isEmpty {
+                Divider().padding(.vertical, 4)
+                Text("Weekly service days")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                ServiceWeekdayChips(active: serviceWeekdays)
+            }
         }
     }
 
@@ -162,22 +169,28 @@ struct HomeView: View {
                 Label("Your plan", systemImage: "tag.fill")
                     .font(.headline)
                 Spacer()
-                Text(INRFormat.rupees(fromPaise: preview.monthlyPricePaise))
-                    .font(.headline)
-                    .foregroundStyle(BrandColor.primary)
+                if let sub = dashboard?.subscription {
+                    Text(INRFormat.rupees(fromPaise: sub.monthlyAmountPaise))
+                        .font(.headline)
+                        .foregroundStyle(BrandColor.primary)
+                }
             }
-            Text(preview.planLabel)
-                .font(.subheadline)
-            Text("/ month · sample tariff until you run a live quote")
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
-            if appState.profile?.hasSubscription == true {
-                Label("Subscription active", systemImage: "checkmark.seal.fill")
+            if let sub = dashboard?.subscription {
+                Text(sub.planLabel)
+                    .font(.subheadline)
+                Text(sub.status.label)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(.secondary)
+                if let due = dashboard?.amountDuePaise, due > 0 {
+                    Text("Amount due: \(INRFormat.rupees(fromPaise: due))")
+                        .font(.caption)
+                        .foregroundStyle(BrandColor.accent)
+                }
             } else {
-                Text("No subscription yet. Price your city with a live quote.")
+                Text("No active subscription")
+                    .font(.subheadline)
+                Text(dashboard?.billingMessage ?? "Get a live quote to start.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -209,17 +222,9 @@ struct HomeView: View {
                 Text(vehicle.subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                if let colour = vehicle.colour, !colour.isEmpty {
-                    Text(colour)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             } else {
                 Text("No vehicle registered yet.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text("Pick make and model from the ops catalog. Size tier is set automatically.")
-                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -239,45 +244,23 @@ struct HomeView: View {
             Label("Society", systemImage: "building.2.fill")
                 .font(.headline)
 
-            if isLoadingExtras, location == nil {
-                ProgressView()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else if let society = location?.society {
+            if let society = location?.society ?? dashboard?.society {
                 Text(society.name)
                     .font(.title3.weight(.semibold))
-                if let city = location?.city {
+                if let city = location?.city ?? dashboard?.city {
                     Text("\(city.name), \(city.state)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 if !society.serviceWeekdays.isEmpty {
                     Text(WeekdayLabel.joined(society.serviceWeekdays))
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(BrandColor.secondaryAlt)
-                }
-                if let address = society.addressLine, !address.isEmpty {
-                    Text(address)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            } else if location?.city != nil {
-                Text(location?.city?.name ?? "")
-                    .font(.title3.weight(.semibold))
-                Text("Pick a society to unlock service days.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             } else {
-                Text("No society selected")
-                    .font(.title3.weight(.semibold))
-                Text("Choose a live apartment community to check eligibility.")
-                    .font(.caption)
+                Text("Set your city and society to unlock service.")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-            }
-
-            if let loadError {
-                Text(loadError)
-                    .font(.caption)
-                    .foregroundStyle(BrandColor.accent)
             }
 
             Button {
@@ -291,17 +274,9 @@ struct HomeView: View {
         }
     }
 
-    private var canQuote: Bool {
-        location?.city != nil && vehicle != nil
-    }
-
-    // MARK: - Helpers
-
     private var greetingText: String {
         let name = appState.profile?.name?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let name, !name.isEmpty {
-            return "Hello, \(name)"
-        }
+        if let name, !name.isEmpty { return "Hello, \(name)" }
         return "Hello"
     }
 
@@ -332,17 +307,29 @@ struct HomeView: View {
         loadError = nil
         defer { isLoadingExtras = false }
 
+        async let dashTask: DashboardResponse? = {
+            do { return try await appState.apiClient.fetchDashboard() }
+            catch {
+                loadError = error.localizedDescription
+                return nil
+            }
+        }()
         async let vehicleTask = loadVehicle()
         async let locationTask = loadLocation()
+
+        dashboard = await dashTask
         vehicle = await vehicleTask
         location = await locationTask
+
+        if let dashVehicle = dashboard?.vehicle {
+            vehicle = dashVehicle
+        }
     }
 
     private func loadVehicle() async -> UserVehicle? {
         do {
             return try await appState.apiClient.fetchMyVehicle()
         } catch {
-            loadError = error.localizedDescription
             return vehicle
         }
     }
@@ -351,7 +338,6 @@ struct HomeView: View {
         do {
             return try await appState.apiClient.fetchMyLocation()
         } catch {
-            loadError = error.localizedDescription
             return location
         }
     }
