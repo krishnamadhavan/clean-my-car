@@ -73,6 +73,8 @@ const modules = [
   { to: '/vehicles', title: 'Vehicle catalog', blurb: 'Makes, models, and size tiers.', badge: 'Module 5' },
   { to: '/pricing', title: 'Pricing', blurb: 'City tariffs, matrix, and quote preview.', badge: 'Module 6' },
   { to: '/pricing/quote', title: 'Quote preview', blurb: 'Run the same quote engine as consumer.', badge: 'Module 6' },
+  { to: '/subscriptions', title: 'Subscriptions', blurb: 'Search plans and schedule admin cancel.', badge: 'Module 7' },
+  { to: '/payments', title: 'Payments', blurb: 'Search intents and reconcile captures.', badge: 'Module 8' },
 ]
 
 onMounted(async () => {
