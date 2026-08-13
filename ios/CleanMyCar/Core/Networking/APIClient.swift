@@ -317,6 +317,14 @@ final class APIClient {
         try await send(method: .get, path: APIPath.meBillingSummary, authenticated: true)
     }
 
+    func fetchMySchedule(days: Int? = nil) async throws -> ScheduleResponse {
+        var path = APIPath.meSchedule
+        if let days {
+            path += "?days=\(days)"
+        }
+        return try await send(method: .get, path: path, authenticated: true)
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"
