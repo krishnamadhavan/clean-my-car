@@ -4,8 +4,10 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     auth,
+    dashboard,
     health,
     location,
+    notification,
     payment,
     pricing,
     profile,
@@ -13,6 +15,7 @@ from app.api.v1.endpoints import (
     subscription,
     vehicle,
     waitlist,
+    wash,
 )
 
 api_router = APIRouter()
@@ -26,3 +29,6 @@ api_router.include_router(pricing.router)
 api_router.include_router(subscription.router)
 api_router.include_router(payment.router)
 api_router.include_router(schedule.router)
+api_router.include_router(wash.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(notification.router)

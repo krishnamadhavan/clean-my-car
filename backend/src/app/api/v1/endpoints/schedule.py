@@ -6,16 +6,16 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import CurrentUser, DbSession
 from app.schemas.schedule import ScheduleOut
-from app.services.schedule import ScheduleService
+from app.services.wash import WashService
 
 router = APIRouter(tags=["schedule"])
 
 
-def get_schedule_service(db: DbSession) -> ScheduleService:
-    return ScheduleService(session=db)
+def get_wash_service(db: DbSession) -> WashService:
+    return WashService(session=db)
 
 
-ScheduleServiceDep = Annotated[ScheduleService, Depends(get_schedule_service)]
+WashServiceDep = Annotated[WashService, Depends(get_wash_service)]
 
 
 @router.get(
@@ -25,7 +25,7 @@ ScheduleServiceDep = Annotated[ScheduleService, Depends(get_schedule_service)]
 )
 async def get_schedule(
     user: CurrentUser,
-    svc: ScheduleServiceDep,
+    svc: WashServiceDep,
     days: Annotated[
         int | None,
         Query(
@@ -35,4 +35,4 @@ async def get_schedule(
         ),
     ] = None,
 ) -> ScheduleOut:
-    return await svc.upcoming(user, days=days)
+    return await svc.upcoming_schedule(user, days=days)

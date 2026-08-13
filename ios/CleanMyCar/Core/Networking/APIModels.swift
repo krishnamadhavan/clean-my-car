@@ -28,6 +28,19 @@ enum APIPath {
     static let mePayments = v1("/me/payments")
     static let meBillingSummary = v1("/me/billing/summary")
     static let meSchedule = v1("/me/schedule")
+    static let meDashboard = v1("/me/dashboard")
+    static let meWashesSummary = v1("/me/washes/summary")
+    static let meWashes = v1("/me/washes")
+    static let meDevices = v1("/me/devices")
+    static let meNotificationPreferences = v1("/me/notification-preferences")
+
+    static func meWash(_ id: UUID) -> String {
+        v1("/me/washes/\(id.uuidString)")
+    }
+
+    static func meDevice(_ id: UUID) -> String {
+        v1("/me/devices/\(id.uuidString)")
+    }
 
     static func mePaymentIntent(_ id: UUID) -> String {
         v1("/me/payments/intents/\(id.uuidString)")
@@ -641,6 +654,111 @@ struct ScheduleResponse: Decodable, Sendable {
     let fromDate: Date
     let untilDate: Date
     let message: String?
+}
+
+// MARK: - Washes & dashboard (Modules 9–10)
+
+enum WashStatus: String, Decodable, Sendable {
+    case scheduled
+    case completed
+    case missed
+    case retryScheduled = "retry_scheduled"
+    case skipped
+}
+
+struct WashRecord: Decodable, Sendable, Identifiable, Equatable {
+    let id: UUID
+    let subscriptionId: UUID
+    let societyId: UUID
+    let vehicleId: UUID?
+    let serviceDate: Date
+    let status: WashStatus
+    let includesExterior: Bool
+    let includesInterior: Bool
+    let completedAt: Date?
+    let missReason: String?
+    let retryOfWashId: UUID?
+    let notes: String?
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct WashListResponse: Decodable, Sendable {
+    let items: [WashRecord]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct WashSummary: Decodable, Sendable {
+    let yearMonth: String
+    let exteriorEntitled: Int
+    let exteriorCompleted: Int
+    let exteriorPending: Int
+    let exteriorMissed: Int
+    let interiorIncluded: Int
+    let interiorCompleted: Int
+    let subscriptionId: UUID?
+    let subscriptionStatus: String?
+    let message: String?
+}
+
+struct DashboardNextService: Decodable, Sendable {
+    let date: Date
+    let kind: String
+    let title: String
+    let isRetry: Bool
+    let washId: UUID?
+}
+
+struct DashboardResponse: Decodable, Sendable {
+    let hasSubscription: Bool
+    let subscription: UserSubscription?
+    let vehicle: UserVehicle?
+    let city: CitySummary?
+    let society: SocietySummary?
+    let serviceWeekdays: [Int]
+    let serviceWeekdayLabels: [String]
+    let washSummary: WashSummary?
+    let nextService: DashboardNextService?
+    let amountDuePaise: Int
+    let currency: String
+    let billingMessage: String?
+    let message: String?
+}
+
+// MARK: - Notifications (Module 11)
+
+struct DeviceRegistration: Decodable, Sendable, Identifiable {
+    let id: UUID
+    let token: String
+    let platform: String
+    let appVersion: String?
+    let deviceName: String?
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct DeviceUpsertBody: Encodable {
+    let token: String
+    let platform: String
+    let appVersion: String?
+    let deviceName: String?
+}
+
+struct NotificationPreferences: Decodable, Sendable {
+    let washCompleted: Bool
+    let paymentEvents: Bool
+    let serviceReminders: Bool
+    let marketing: Bool
+    let updatedAt: Date?
+}
+
+struct NotificationPreferencesUpdateBody: Encodable {
+    let washCompleted: Bool?
+    let paymentEvents: Bool?
+    let serviceReminders: Bool?
+    let marketing: Bool?
 }
 
 // MARK: - Dashboard preview (until DASH-01 / WASH-* APIs exist)
