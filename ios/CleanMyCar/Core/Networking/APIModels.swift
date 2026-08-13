@@ -27,6 +27,7 @@ enum APIPath {
     static let mePaymentIntents = v1("/me/payments/intents")
     static let mePayments = v1("/me/payments")
     static let meBillingSummary = v1("/me/billing/summary")
+    static let meSchedule = v1("/me/schedule")
 
     static func mePaymentIntent(_ id: UUID) -> String {
         v1("/me/payments/intents/\(id.uuidString)")
@@ -593,6 +594,53 @@ struct BillingSummary: Decodable, Sendable {
     let isOverdue: Bool
     let openPaymentIntentId: UUID?
     let message: String
+}
+
+// MARK: - Schedule (WASH-04)
+
+enum ScheduleOccurrenceKind: String, Decodable, Sendable {
+    case scheduled
+    case retryScheduled = "retry_scheduled"
+
+    var systemImage: String {
+        switch self {
+        case .scheduled: return "drop.fill"
+        case .retryScheduled: return "arrow.clockwise"
+        }
+    }
+
+    var colorLabel: String {
+        switch self {
+        case .scheduled: return "Wash"
+        case .retryScheduled: return "Retry"
+        }
+    }
+}
+
+struct ScheduleOccurrence: Decodable, Sendable, Identifiable, Equatable {
+    let date: Date
+    let weekday: Int
+    let weekdayLabel: String
+    let kind: ScheduleOccurrenceKind
+    let title: String
+    let note: String?
+    let societyId: UUID?
+    let societyName: String?
+
+    var id: String {
+        "\(JSONCoders.formatDay(date))-\(kind.rawValue)-\(title)"
+    }
+}
+
+struct ScheduleResponse: Decodable, Sendable {
+    let items: [ScheduleOccurrence]
+    let serviceWeekdays: [Int]
+    let serviceWeekdayLabels: [String]
+    let subscriptionId: UUID?
+    let subscriptionStatus: String?
+    let fromDate: Date
+    let untilDate: Date
+    let message: String?
 }
 
 // MARK: - Dashboard preview (until DASH-01 / WASH-* APIs exist)

@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     payment,
     pricing,
     profile,
+    schedule,
     subscription,
     vehicle,
     waitlist,
@@ -24,3 +25,4 @@ api_router.include_router(vehicle.router)
 api_router.include_router(pricing.router)
 api_router.include_router(subscription.router)
 api_router.include_router(payment.router)
+api_router.include_router(schedule.router)
