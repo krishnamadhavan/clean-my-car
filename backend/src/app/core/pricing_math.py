@@ -57,7 +57,7 @@ def count_service_days(
 ) -> int:
     """Count occurrences of society service weekdays from start..end inclusive.
 
-    ``service_weekdays`` uses 0=Monday … 6=Sunday (Python ``date.weekday()``).
+    ``service_weekdays`` uses 0=Monday … 5=Saturday (Python ``date.weekday()``).
     """
     if not service_weekdays:
         return 0

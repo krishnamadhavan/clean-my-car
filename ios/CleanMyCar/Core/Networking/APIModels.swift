@@ -880,7 +880,7 @@ struct DashboardPreview: Equatable, Sendable {
     let interiorIncluded: Int
     let nextServiceDate: Date
     let isNextServiceRetry: Bool
-    /// 0=Mon … 6=Sun
+    /// 0=Mon … 5=Sat (Sunday is not serviceable)
     let serviceWeekdays: [Int]
     let planLabel: String
     let monthlyPricePaise: Int
@@ -903,7 +903,6 @@ struct DashboardPreview: Equatable, Sendable {
 
     static let sample: DashboardPreview = {
         let calendar = Calendar(identifier: .gregorian)
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
         // Next sample service: two days from “today” at 9:00 local.
         let base = calendar.date(byAdding: .day, value: 2, to: Date()) ?? Date()
         let next = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: base) ?? base
@@ -924,7 +923,8 @@ struct DashboardPreview: Equatable, Sendable {
 }
 
 enum WeekdayLabel {
-    static let short = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    /// Serviceable days only: 0=Mon … 5=Sat.
+    static let short = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
     static func shortName(for weekday: Int) -> String {
         guard weekday >= 0, weekday < short.count else { return "?" }
@@ -932,7 +932,11 @@ enum WeekdayLabel {
     }
 
     static func joined(_ weekdays: [Int]) -> String {
-        weekdays.sorted().map(shortName(for:)).joined(separator: " · ")
+        weekdays
+            .filter { (0 ... 5).contains($0) }
+            .sorted()
+            .map(shortName(for:))
+            .joined(separator: " · ")
     }
 }
 

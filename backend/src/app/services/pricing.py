@@ -177,8 +177,8 @@ class PricingService:
         if data.society_id is not None:
             society = await self._require_live_society(data.society_id, city_id=city.id)
             society_out = SocietySummaryOut.from_society(society)
-            weekdays = list(society.service_weekdays or [])
-            labels = [WEEKDAY_LABELS[d] for d in weekdays if 0 <= d <= 6]
+            weekdays = [d for d in (society.service_weekdays or []) if 0 <= d <= 5]
+            labels = [WEEKDAY_LABELS[d] for d in weekdays]
             month_start = date(start.year, start.month, 1)
             month_end = date(start.year, start.month, dim)
             exterior_full = count_service_days(

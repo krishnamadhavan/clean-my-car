@@ -7,8 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# 0=Monday … 6=Sunday
-WEEKDAY_LABELS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+# 0=Monday … 5=Saturday (Sunday is not a service day)
+WEEKDAY_LABELS = ("mon", "tue", "wed", "thu", "fri", "sat")
 
 
 class CityOut(BaseModel):
@@ -33,8 +33,8 @@ class SocietySummaryOut(BaseModel):
 
     @classmethod
     def from_society(cls, society: object) -> SocietySummaryOut:
-        weekdays: list[int] = list(society.service_weekdays or [])
-        labels = [WEEKDAY_LABELS[d] for d in weekdays if 0 <= d <= 6]
+        weekdays = [d for d in (society.service_weekdays or []) if 0 <= d <= 5]
+        labels = [WEEKDAY_LABELS[d] for d in weekdays]
         return cls(
             id=society.id,
             city_id=society.city_id,

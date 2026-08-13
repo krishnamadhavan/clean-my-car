@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// Highlights the three weekly service days for a society (0=Mon … 6=Sun).
+/// Highlights society service days (0=Mon … 5=Sat). Sunday is never serviceable.
 struct ServiceWeekdayChips: View {
     let active: [Int]
 
-    private var activeSet: Set<Int> { Set(active) }
+    private var activeSet: Set<Int> { Set(active.filter { (0 ... 5).contains($0) }) }
 
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(0 ..< 7, id: \.self) { day in
+            ForEach(0 ..< 6, id: \.self) { day in
                 let isOn = activeSet.contains(day)
                 Text(WeekdayLabel.shortName(for: day))
                     .font(.caption.weight(.semibold))

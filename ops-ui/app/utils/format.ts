@@ -23,8 +23,8 @@ export function rupeesFromPaise(paise: number): string {
   return (paise / 100).toFixed(2)
 }
 
-/** Full week labels (0=Mon … 6=Sun) for display of stored service days. */
-export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+/** Serviceable weekdays only (0=Mon … 5=Sat). Sunday is never serviceable. */
+export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
 /**
  * Selectable service days for society create/edit (Mon–Sat only).
@@ -41,6 +41,7 @@ export const SERVICE_WEEKDAY_OPTIONS = [
 
 export function formatWeekdays(days: number[]): string {
   return days
+    .filter((d) => d >= 0 && d <= 5)
     .slice()
     .sort((a, b) => a - b)
     .map((d) => WEEKDAY_LABELS[d] ?? String(d))

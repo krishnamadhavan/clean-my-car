@@ -28,7 +28,7 @@ class Society(Base, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     address_line: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    # ISO weekday numbers: 0=Monday … 6=Sunday. Exactly 3 for v1 service cadence.
+    # Weekday numbers: 0=Monday … 5=Saturday (Sunday not serviceable). Exactly 3 for v1.
     service_weekdays: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False)
     is_serviceable: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
