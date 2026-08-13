@@ -3,7 +3,9 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    app_meta,
     auth,
+    content,
     dashboard,
     health,
     location,
@@ -13,9 +15,11 @@ from app.api.v1.endpoints import (
     profile,
     schedule,
     subscription,
+    support,
     vehicle,
     waitlist,
     wash,
+    webhooks,
 )
 
 api_router = APIRouter()
@@ -32,3 +36,7 @@ api_router.include_router(schedule.router)
 api_router.include_router(wash.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(notification.router)
+api_router.include_router(content.router)
+api_router.include_router(support.router)
+api_router.include_router(app_meta.router)
+api_router.include_router(webhooks.router)
