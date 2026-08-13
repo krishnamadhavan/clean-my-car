@@ -10,12 +10,15 @@ from app.api.ops.endpoints import (
     auth,
     health,
     location,
+    notification,
+    overview,
     payment,
     pricing,
     subscription,
     users,
     vehicle,
     waitlist,
+    wash,
 )
 
 ops_router = APIRouter()
@@ -28,3 +31,6 @@ ops_router.include_router(vehicle.router)
 ops_router.include_router(pricing.router)
 ops_router.include_router(subscription.router)
 ops_router.include_router(payment.router)
+ops_router.include_router(wash.router)
+ops_router.include_router(overview.router)
+ops_router.include_router(notification.router)

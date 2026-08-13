@@ -325,6 +325,76 @@ final class APIClient {
         return try await send(method: .get, path: path, authenticated: true)
     }
 
+    func fetchDashboard() async throws -> DashboardResponse {
+        try await send(method: .get, path: APIPath.meDashboard, authenticated: true)
+    }
+
+    func fetchWashSummary() async throws -> WashSummary {
+        try await send(method: .get, path: APIPath.meWashesSummary, authenticated: true)
+    }
+
+    func listWashes(month: String? = nil, status: String? = nil, page: Int = 1, pageSize: Int = 20) async throws -> WashListResponse {
+        var parts = ["page=\(page)", "page_size=\(pageSize)"]
+        if let month { parts.append("month=\(month)") }
+        if let status { parts.append("status=\(status)") }
+        let path = "\(APIPath.meWashes)?\(parts.joined(separator: "&"))"
+        return try await send(method: .get, path: path, authenticated: true)
+    }
+
+    func getWash(_ id: UUID) async throws -> WashRecord {
+        try await send(method: .get, path: APIPath.meWash(id), authenticated: true)
+    }
+
+    func registerDevice(
+        token: String,
+        platform: String = "ios",
+        appVersion: String? = nil,
+        deviceName: String? = nil
+    ) async throws -> DeviceRegistration {
+        try await send(
+            method: .put,
+            path: APIPath.meDevices,
+            body: DeviceUpsertBody(
+                token: token,
+                platform: platform,
+                appVersion: appVersion,
+                deviceName: deviceName
+            ),
+            authenticated: true
+        )
+    }
+
+    func deleteDevice(_ id: UUID) async throws {
+        let _: MessageResponse = try await send(
+            method: .delete,
+            path: APIPath.meDevice(id),
+            authenticated: true
+        )
+    }
+
+    func fetchNotificationPreferences() async throws -> NotificationPreferences {
+        try await send(method: .get, path: APIPath.meNotificationPreferences, authenticated: true)
+    }
+
+    func updateNotificationPreferences(
+        washCompleted: Bool? = nil,
+        paymentEvents: Bool? = nil,
+        serviceReminders: Bool? = nil,
+        marketing: Bool? = nil
+    ) async throws -> NotificationPreferences {
+        try await send(
+            method: .put,
+            path: APIPath.meNotificationPreferences,
+            body: NotificationPreferencesUpdateBody(
+                washCompleted: washCompleted,
+                paymentEvents: paymentEvents,
+                serviceReminders: serviceReminders,
+                marketing: marketing
+            ),
+            authenticated: true
+        )
+    }
+
     private enum Method: String {
         case get = "GET"
         case post = "POST"
