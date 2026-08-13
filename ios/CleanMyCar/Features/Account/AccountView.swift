@@ -13,6 +13,7 @@ struct AccountView: View {
             List {
                 profileSection
                 modulesSection
+                helpSection
                 statusSection
                 sessionSection
                 dangerSection
@@ -97,6 +98,47 @@ struct AccountView: View {
                     .environmentObject(appState)
             } label: {
                 Label("Waitlist", systemImage: "bell.fill")
+            }
+        }
+    }
+
+    private var helpSection: some View {
+        Section("Help & legal") {
+            NavigationLink {
+                SupportTicketsView()
+                    .environmentObject(appState)
+            } label: {
+                Label("Support tickets", systemImage: "lifepreserver")
+            }
+            NavigationLink {
+                FAQView()
+                    .environmentObject(appState)
+            } label: {
+                Label("FAQ", systemImage: "questionmark.circle")
+            }
+            NavigationLink {
+                NotificationPreferencesView()
+                    .environmentObject(appState)
+            } label: {
+                Label("Notification preferences", systemImage: "bell.badge")
+            }
+            NavigationLink {
+                LegalDocumentView(docType: "terms", title: "Terms")
+                    .environmentObject(appState)
+            } label: {
+                Label("Terms of service", systemImage: "doc.text")
+            }
+            NavigationLink {
+                LegalDocumentView(docType: "privacy", title: "Privacy")
+                    .environmentObject(appState)
+            } label: {
+                Label("Privacy policy", systemImage: "hand.raised")
+            }
+            NavigationLink {
+                LegalDocumentView(docType: "cancellation", title: "Cancellation")
+                    .environmentObject(appState)
+            } label: {
+                Label("Cancellation policy", systemImage: "xmark.circle")
             }
         }
     }

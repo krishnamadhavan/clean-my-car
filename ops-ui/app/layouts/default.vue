@@ -74,11 +74,16 @@ import {
   CalendarOutlined,
   CarOutlined,
   CreditCardOutlined,
+  CustomerServiceOutlined,
   DashboardOutlined,
   DollarOutlined,
+  CheckCircleOutlined,
   EnvironmentOutlined,
+  FileTextOutlined,
+  HistoryOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SettingOutlined,
   TeamOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons-vue'
@@ -106,6 +111,12 @@ const menuItems = computed<ItemType[]>(() => [
   { key: '/pricing', icon: () => h(DollarOutlined), label: 'Pricing' },
   { key: '/subscriptions', icon: () => h(CalendarOutlined), label: 'Subscriptions' },
   { key: '/payments', icon: () => h(CreditCardOutlined), label: 'Payments' },
+  { key: '/washes', icon: () => h(CheckCircleOutlined), label: 'Washes' },
+  { key: '/support', icon: () => h(CustomerServiceOutlined), label: 'Support' },
+  { key: '/content/faq', icon: () => h(FileTextOutlined), label: 'FAQ' },
+  { key: '/content/legal', icon: () => h(FileTextOutlined), label: 'Legal' },
+  { key: '/app-config', icon: () => h(SettingOutlined), label: 'App config' },
+  { key: '/audit', icon: () => h(HistoryOutlined), label: 'Audit' },
 ])
 
 const selectedKeys = computed({
@@ -118,6 +129,12 @@ const selectedKeys = computed({
     if (path.startsWith('/pricing')) return ['/pricing']
     if (path.startsWith('/subscriptions')) return ['/subscriptions']
     if (path.startsWith('/payments')) return ['/payments']
+    if (path.startsWith('/washes')) return ['/washes']
+    if (path.startsWith('/support')) return ['/support']
+    if (path.startsWith('/content/faq')) return ['/content/faq']
+    if (path.startsWith('/content/legal')) return ['/content/legal']
+    if (path.startsWith('/app-config')) return ['/app-config']
+    if (path.startsWith('/audit')) return ['/audit']
     return ['/']
   },
   set: () => {},
@@ -132,6 +149,12 @@ const pageTitle = computed(() => {
   if (path.startsWith('/pricing')) return 'Pricing'
   if (path.startsWith('/subscriptions')) return 'Subscriptions'
   if (path.startsWith('/payments')) return 'Payments'
+  if (path.startsWith('/washes')) return 'Washes'
+  if (path.startsWith('/support')) return 'Support'
+  if (path.startsWith('/content/faq')) return 'FAQ'
+  if (path.startsWith('/content/legal')) return 'Legal'
+  if (path.startsWith('/app-config')) return 'App config'
+  if (path.startsWith('/audit')) return 'Audit'
   return 'Dashboard'
 })
 

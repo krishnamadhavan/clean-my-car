@@ -33,6 +33,19 @@ enum APIPath {
     static let meWashes = v1("/me/washes")
     static let meDevices = v1("/me/devices")
     static let meNotificationPreferences = v1("/me/notification-preferences")
+    static let contentFaq = v1("/content/faq")
+    static let supportContact = v1("/support/contact")
+    static let meSupportTickets = v1("/me/support/tickets")
+    static let appConfig = v1("/app/config")
+    static let appBootstrap = v1("/app/bootstrap")
+
+    static func contentLegal(_ docType: String) -> String {
+        v1("/content/legal/\(docType)")
+    }
+
+    static func meSupportTicket(_ id: UUID) -> String {
+        v1("/me/support/tickets/\(id.uuidString)")
+    }
 
     static func meWash(_ id: UUID) -> String {
         v1("/me/washes/\(id.uuidString)")
@@ -761,7 +774,103 @@ struct NotificationPreferencesUpdateBody: Encodable {
     let marketing: Bool?
 }
 
-// MARK: - Dashboard preview (until DASH-01 / WASH-* APIs exist)
+// MARK: - Content & support (Modules 12–13)
+
+struct FaqEntry: Decodable, Sendable, Identifiable, Equatable {
+    let id: UUID
+    let question: String
+    let answer: String
+    let category: String
+    let displayOrder: Int
+}
+
+struct FaqListResponse: Decodable, Sendable {
+    let items: [FaqEntry]
+}
+
+struct LegalDocument: Decodable, Sendable {
+    let docType: String
+    let version: String
+    let title: String
+    let body: String?
+    let url: String?
+    let publishedAt: Date?
+}
+
+struct ContactChannels: Decodable, Sendable {
+    let whatsapp: String?
+    let whatsappUrl: String?
+    let email: String?
+    let phone: String?
+    let message: String?
+}
+
+enum SupportTicketCategory: String, Codable, Sendable, CaseIterable {
+    case billing
+    case service
+    case account
+    case other
+
+    var label: String {
+        switch self {
+        case .billing: return "Billing"
+        case .service: return "Service"
+        case .account: return "Account"
+        case .other: return "Other"
+        }
+    }
+}
+
+enum SupportTicketStatus: String, Decodable, Sendable {
+    case open
+    case inProgress = "in_progress"
+    case resolved
+    case closed
+
+    var label: String {
+        switch self {
+        case .open: return "Open"
+        case .inProgress: return "In progress"
+        case .resolved: return "Resolved"
+        case .closed: return "Closed"
+        }
+    }
+}
+
+struct SupportTicket: Decodable, Sendable, Identifiable, Equatable {
+    let id: UUID
+    let category: SupportTicketCategory
+    let message: String
+    let status: SupportTicketStatus
+    let washId: UUID?
+    let paymentId: UUID?
+    let opsReply: String?
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct SupportTicketListResponse: Decodable, Sendable {
+    let items: [SupportTicket]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct SupportTicketCreateBody: Encodable {
+    let category: SupportTicketCategory
+    let message: String
+}
+
+struct AppConfigResponse: Decodable, Sendable {
+    let minIosVersion: String
+    let forceUpdate: Bool
+    let supportWhatsapp: String?
+    let supportEmail: String?
+    let supportPhone: String?
+    let supportWhatsappUrl: String?
+}
+
+// MARK: - Dashboard preview (fallback sample)
 
 /// Static month snapshot used by the Home dashboard until subscription & wash APIs ship.
 struct DashboardPreview: Equatable, Sendable {
