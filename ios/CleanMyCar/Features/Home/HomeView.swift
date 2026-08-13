@@ -50,7 +50,9 @@ struct HomeView: View {
                 }
                 .environmentObject(appState)
             }
-            .sheet(isPresented: $showQuote) {
+            .sheet(isPresented: $showQuote, onDismiss: {
+                Task { await reload() }
+            }) {
                 QuoteView(location: location, vehicle: vehicle)
                     .environmentObject(appState)
             }

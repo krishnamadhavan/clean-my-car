@@ -7,7 +7,6 @@ struct QuoteView: View {
 
     let location: UserLocation?
     let vehicle: UserVehicle?
-    var onSubscribed: (() -> Void)?
 
     @State private var interiorOptions: [InteriorOption] = []
     @State private var interiorFrequency = 0
@@ -274,8 +273,8 @@ struct QuoteView: View {
             )
             await appState.refreshProfile()
             successMessage = "Subscription active. You’re paid for this period."
-            onSubscribed?()
-            try? await Task.sleep(nanoseconds: 800_000_000)
+            // Plan reloads on sheet `onDismiss` so state stays consistent after close.
+            try? await Task.sleep(nanoseconds: 600_000_000)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

@@ -9,10 +9,13 @@ struct PlanView: View {
     @State private var subscription: UserSubscription?
     @State private var billing: BillingSummary?
     @State private var isLoading = true
+    @State private var hasLoadedOnce = false
     @State private var isWorking = false
     @State private var errorMessage: String?
     @State private var showQuote = false
     @State private var confirmCancel = false
+    /// Drops stale `loadContext` results when several reloads overlap.
+    @State private var loadRequestID = 0
 
     var body: some View {
         NavigationStack {
@@ -25,7 +28,7 @@ struct PlanView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    if isLoading {
+                    if isLoading, !hasLoadedOnce {
                         ProgressView("Loading plan…")
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -42,8 +45,8 @@ struct PlanView: View {
             }
             .background(BrandColor.background.ignoresSafeArea())
             .navigationTitle("Plan")
-            .refreshable { await loadContext() }
-            .task { await loadContext() }
+            .refreshable { await loadContext(showFullScreenLoading: false) }
+            .task { await loadContext(showFullScreenLoading: true) }
             .overlay {
                 if isWorking {
                     ProgressView()
@@ -51,11 +54,12 @@ struct PlanView: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
             }
-            .sheet(isPresented: $showQuote) {
-                QuoteView(location: location, vehicle: vehicle) {
-                    Task { await loadContext() }
-                }
-                .environmentObject(appState)
+            .sheet(isPresented: $showQuote, onDismiss: {
+                // Always reconcile after quote sheet closes (subscribe or cancel).
+                Task { await loadContext(showFullScreenLoading: false) }
+            }) {
+                QuoteView(location: location, vehicle: vehicle)
+                    .environmentObject(appState)
             }
             .confirmationDialog(
                 "Cancel at month end?",
@@ -208,21 +212,49 @@ struct PlanView: View {
         }
     }
 
-    private func loadContext() async {
-        isLoading = true
+    @MainActor
+    private func loadContext(showFullScreenLoading: Bool = false) async {
+        loadRequestID += 1
+        let requestID = loadRequestID
+        if showFullScreenLoading, !hasLoadedOnce {
+            isLoading = true
+        }
         errorMessage = nil
-        defer { isLoading = false }
-        async let v = try? appState.apiClient.fetchMyVehicle()
-        async let l = try? appState.apiClient.fetchMyLocation()
-        async let s = try? appState.apiClient.fetchMySubscription()
-        async let b = try? appState.apiClient.fetchBillingSummary()
-        vehicle = await v
-        location = await l
-        subscription = await s
-        billing = await b
-        await appState.refreshProfile()
+        defer {
+            if requestID == loadRequestID {
+                isLoading = false
+                hasLoadedOnce = true
+            }
+        }
+
+        do {
+            async let vehicleTask = appState.apiClient.fetchMyVehicle()
+            async let locationTask = appState.apiClient.fetchMyLocation()
+            async let subscriptionTask = appState.apiClient.fetchMySubscription()
+            async let billingTask = appState.apiClient.fetchBillingSummary()
+
+            let nextVehicle = try await vehicleTask
+            let nextLocation = try await locationTask
+            let nextSubscription = try await subscriptionTask
+            let nextBilling = try await billingTask
+
+            guard requestID == loadRequestID else { return }
+
+            vehicle = nextVehicle
+            location = nextLocation
+            subscription = nextSubscription
+            billing = nextBilling
+            await appState.refreshProfile()
+        } catch is CancellationError {
+            // Superseded or view torn down.
+        } catch {
+            guard requestID == loadRequestID else { return }
+            // Keep the last good plan/vehicle/location; only surface the error.
+            errorMessage = error.localizedDescription
+        }
     }
 
+    @MainActor
     private func payNow() async {
         isWorking = true
         errorMessage = nil
@@ -240,31 +272,33 @@ struct PlanView: View {
                 intentId,
                 providerRef: "IOS-DEV-\(Int(Date().timeIntervalSince1970))"
             )
-            await loadContext()
+            await loadContext(showFullScreenLoading: false)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
+    @MainActor
     private func cancelSub() async {
         isWorking = true
         errorMessage = nil
         defer { isWorking = false }
         do {
             subscription = try await appState.apiClient.cancelSubscription()
-            await loadContext()
+            await loadContext(showFullScreenLoading: false)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
+    @MainActor
     private func undoCancel() async {
         isWorking = true
         errorMessage = nil
         defer { isWorking = false }
         do {
             subscription = try await appState.apiClient.undoCancelSubscription()
-            await loadContext()
+            await loadContext(showFullScreenLoading: false)
         } catch {
             errorMessage = error.localizedDescription
         }
